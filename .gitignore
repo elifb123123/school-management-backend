@@ -1,0 +1,35 @@
+### Java & Spring Boot ###
+*.class
+*.log
+*.jar
+*.war
+
+### Maven (Derleme Çıktıları) ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+pom.xml.notes
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+### IntelliJ IDEA (Editör Ayarları) ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+/classes/
+
+### H2 Database (Yerel Veritabanı Dosyaları) ###
+*.mv.db
+*.trace.db
+
+### İşletim Sistemi Geçici Dosyaları ###
+.DS_Store
+Thumbs.db
+
+### Spring Boot Yerel Ayarlar (Hassas Veriler) ###
+demo/src/main/resources/application.properties
