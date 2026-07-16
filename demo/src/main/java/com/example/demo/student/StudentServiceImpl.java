@@ -45,7 +45,7 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.deleteById(studentId);
     }
 
-    public void updateStudent(Long studentId, String name) {
+    public Student updateStudent(Long studentId, String name) {
 
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new IllegalStateException(" student " + studentId + "does not exist"));
 
@@ -53,6 +53,7 @@ public class StudentServiceImpl implements StudentService {
                 !Objects.equals(student.getName(), name)) {
             student.setName(name);
         }
+        return student;
     }
 
     public Student searchStudent(Long studentId) {
