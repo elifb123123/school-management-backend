@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "api/v1/student")
+@RequestMapping(path = "api/student")
 public class StudentController {
 
     // TODO: DEPENDENCY INJECTION NEDİR NEDEN YAPILIR ? NASIL YAPILIR ? yapmayınca ne oluyor ?
@@ -21,6 +21,11 @@ public class StudentController {
     @GetMapping
     public List<Student> getStudents() {
         return studentService.getStudents();
+    }
+
+    @GetMapping(path = "{studentId}")
+    public Student searchStudent(@PathVariable Long studentId){
+        return studentService.searchStudent(studentId);
     }
 
     // TODO: RequestBody ??

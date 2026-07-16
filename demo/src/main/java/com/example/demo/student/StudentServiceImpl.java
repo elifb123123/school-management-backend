@@ -55,4 +55,8 @@ public class StudentServiceImpl implements StudentService {
         }
     }
 
+    public Student searchStudent(Long studentId) {
+        System.out.println(studentRepository.findById(studentId));
+        return studentRepository.findById(studentId).orElseThrow(() -> new IllegalStateException(" student " + studentId + "does not exist"));
+    }
 }

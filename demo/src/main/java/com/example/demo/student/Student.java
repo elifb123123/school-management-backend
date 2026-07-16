@@ -12,13 +12,13 @@ import java.time.Period;
 
 @Entity
 @Table
-@Getter // Tüm getter'ları otomatik üretir
 @Setter
+@Getter
 @ToString
 public class Student {
     @Id
     @SequenceGenerator(
-            name= "student_seq",
+            name = "student_seq",
             sequenceName = "student_seq",
             allocationSize = 1
     )
@@ -27,7 +27,8 @@ public class Student {
             generator = "student_seq"
     )
     private Long id;
-    private String name ;
+
+    private String name;
     private LocalDate DateOfBirth;
     @Transient
     private Integer age;
@@ -48,15 +49,9 @@ public class Student {
     }
 
 
-
-    public Integer getAge(){
+    public Integer getAge() {
 
         return Period.between(DateOfBirth, LocalDate.now()).getYears();
-    }
-
-    public String getName(){
-
-        return name;
     }
 
 }
