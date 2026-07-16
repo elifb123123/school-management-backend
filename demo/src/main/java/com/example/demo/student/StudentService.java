@@ -11,4 +11,6 @@ public interface StudentService {
     void deleteStudent(Long studentId);
 
     void updateStudent(Long studentId, String name);
+
+    Student searchStudent( Long studentId);
 }
