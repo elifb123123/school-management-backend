@@ -1,6 +1,7 @@
 package com.example.demo.student.persistence;
 
 
+import com.example.demo.school.persistence.School;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,22 +17,22 @@ import java.time.Period;
 @Getter
 @ToString
 public class Student {
+
     @Id
-    @SequenceGenerator(
-            name = "student_seq",
-            sequenceName = "student_seq",
-            allocationSize = 1
-    )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "student_seq"
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
+
     private LocalDate DateOfBirth;
+
     @Transient
     private Integer age;
+
+    @ManyToOne
+    @JoinColumn(name = "school_id", referencedColumnName = "id")
+    private School school;
 
 
     public Student() {
@@ -52,5 +53,6 @@ public class Student {
     public Integer getAge() {
         return Period.between(DateOfBirth, LocalDate.now()).getYears();
     }
+
 
 }
