@@ -1,4 +1,6 @@
-package com.example.demo.student;
+package com.example.demo.student.service;
+
+import com.example.demo.student.persistence.Student;
 
 import java.util.List;
 
