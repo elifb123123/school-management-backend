@@ -1,4 +1,4 @@
-package com.example.demo.student;
+package com.example.demo.student.persistence;
 
 
 import jakarta.persistence.*;
@@ -50,7 +50,6 @@ public class Student {
 
 
     public Integer getAge() {
-
         return Period.between(DateOfBirth, LocalDate.now()).getYears();
     }
 

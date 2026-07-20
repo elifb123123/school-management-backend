@@ -1,6 +1,9 @@
-package com.example.demo.student;
+package com.example.demo.student.controller;
 
+import com.example.demo.student.persistence.Student;
+import com.example.demo.student.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,7 +16,7 @@ public class StudentController {
     private final StudentService studentService;
 
     @Autowired
-    public StudentController(StudentServiceImpl studentService) {
+    public StudentController(StudentService studentService) {
         this.studentService = studentService;
     }
 
@@ -24,14 +27,15 @@ public class StudentController {
     }
 
     @GetMapping(path = "{studentId}")
-    public Student searchStudent(@PathVariable Long studentId){
+    public Student searchStudent(@PathVariable Long studentId) {
         return studentService.searchStudent(studentId);
     }
 
     // TODO: RequestBody ??
     @PostMapping
-    public void registerNewStudent(@RequestBody Student student) {
+    public ResponseEntity<Student> registerNewStudent(@RequestBody Student student) {
         studentService.addNewStudent(student);
+        return ResponseEntity.status(201).body(student);
     }
 
     @DeleteMapping(path = "{studentId}")
@@ -42,8 +46,9 @@ public class StudentController {
 
     // TODO: PathVariable ve RequestParam farkı ???
     @PutMapping(path = "{studentId}")
-    public void updateStudent(@PathVariable Long studentId, @RequestParam(required = false) String name) {
-        studentService.updateStudent(studentId, name);
+    public ResponseEntity<Student> updateStudent(@PathVariable Long studentId, @RequestParam(required = false) String name) {
+        Student updated = studentService.updateStudent(studentId, name);
+        return ResponseEntity.ok().body(updated);
     }
 
 }

@@ -1,5 +1,7 @@
-package com.example.demo.student;
+package com.example.demo.student.service;
 
+import com.example.demo.student.persistence.Student;
+import com.example.demo.student.persistence.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +47,7 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.deleteById(studentId);
     }
 
-    public void updateStudent(Long studentId, String name) {
+    public Student updateStudent(Long studentId, String name) {
 
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new IllegalStateException(" student " + studentId + "does not exist"));
 
@@ -53,6 +55,7 @@ public class StudentServiceImpl implements StudentService {
                 !Objects.equals(student.getName(), name)) {
             student.setName(name);
         }
+        return student;
     }
 
     public Student searchStudent(Long studentId) {
