@@ -15,6 +15,7 @@ import java.time.Month;
 import java.util.List;
 import java.util.Set;
 
+
 @Configuration
 public class DataConfig {
 
@@ -32,7 +33,7 @@ public class DataConfig {
                 Student ayse = new Student("ayse", LocalDate.of(2003, Month.MARCH, 5));
                 Student alex = new Student("alex", LocalDate.of(2003, Month.MARCH, 5));
                 ayse.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
-                alex.setSchool(schoolRepository.findSchoolBySchoolName("School 2").orElse(null));
+                alex.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
                 studentRepository.saveAll(List.of(ayse, alex));
             }
 
@@ -45,15 +46,15 @@ public class DataConfig {
 
                 Student alex = studentRepository.findStudentByName("alex")
                         .orElseThrow(() -> new RuntimeException("Alex bulunamadı!"));
-                // Null riski kalmadığı için List.of güvenle kullanılabilir
+                // Null riski kalmadığı için Set.of güvenle kullanılabilir
                 john.setStudents(Set.of(ayse, alex));
+                // student'i teacher'e geri baglayamıyoruz. Fetch lazy olduğu için buradan studenti çagıramıyor.
+                // dolayısıyla ogrencinin ogretmenlerine doğrudan student nesnesi üzerinden erişemeyiz.
                 Teacher maria = new Teacher();
                 maria.setName("Maria Garcia");
                 maria.setSchool(schoolRepository.findSchoolBySchoolName("School 2").orElse(null));
 
-                teacherRepository.saveAll(
-                        List.of(john, maria)
-                );
+                teacherRepository.saveAll(List.of(john, maria));
             }
         };
     }

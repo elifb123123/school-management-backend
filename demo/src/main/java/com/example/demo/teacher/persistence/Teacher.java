@@ -2,16 +2,16 @@ package com.example.demo.teacher.persistence;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.student.persistence.Student;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,7 +25,8 @@ public class Teacher {
 
     @ManyToOne
     @JoinColumn(name = "school_id", referencedColumnName = "id")
-    @JsonIgnore
+    @JsonIgnoreProperties({"students", "teachers"})
+    @ToString.Exclude
     private School school;
 
     @ManyToMany
@@ -34,7 +35,13 @@ public class Teacher {
             joinColumns = @JoinColumn(name = "teacher_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
     )
-    private Set<Student> students;
+    @JsonIgnoreProperties({"teachers", "school"})
+    @ToString.Exclude
+    private Set<Student> students = new HashSet<>();
 
+
+    public Teacher(String name) {
+        this.name = name;
+    }
 
 }

@@ -2,14 +2,17 @@ package com.example.demo.school.persistence;
 
 import com.example.demo.student.persistence.Student;
 import com.example.demo.teacher.persistence.Teacher;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -24,9 +27,11 @@ public class School {
     private String schoolName;
 
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"school", "teachers"})
     private List<Student> students;
 
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"school", "students"})
     private List<Teacher> teachers;
 
     public School(String schoolName) {

@@ -3,7 +3,7 @@ package com.example.demo.student.persistence;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.teacher.persistence.Teacher;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,8 +21,6 @@ import java.util.Set;
 @ToString
 public class Student {
 
-    @ManyToMany
-    Set<Teacher> teachers;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,12 +29,19 @@ public class Student {
     private LocalDate DateOfBirth;
     @Transient
     private Integer age;
+
     @ManyToOne
     @JoinColumn(name = "school_id", referencedColumnName = "id")
-    @JsonIgnore
+    @JsonIgnoreProperties({"students", "teachers"})
+    @ToString.Exclude
     private School school;
 
+    @JsonIgnoreProperties({"students", "school"})
+    @ManyToMany
+    @ToString.Exclude
+    private Set<Teacher> teachers;
 
+    
     public Student() {
     }
 
