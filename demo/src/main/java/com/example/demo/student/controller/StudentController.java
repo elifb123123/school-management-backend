@@ -1,6 +1,7 @@
 package com.example.demo.student.controller;
 
-import com.example.demo.student.persistence.Student;
+import com.example.demo.student.dto.StudentRequest;
+import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,32 +23,32 @@ public class StudentController {
 
 
     @GetMapping
-    public List<Student> getStudents() {
+    public List<StudentResponse> getStudents() {
         return studentService.getStudents();
     }
 
-    @GetMapping(path = "{studentId}")
-    public Student searchStudent(@PathVariable Long studentId) {
+    @GetMapping(path = "/{studentId}")
+    public StudentResponse searchStudent(@PathVariable Long studentId) {
         return studentService.searchStudent(studentId);
     }
 
     // TODO: RequestBody ??
     @PostMapping
-    public ResponseEntity<Student> registerNewStudent(@RequestBody Student student) {
-        studentService.addNewStudent(student);
-        return ResponseEntity.status(201).body(student);
+    public ResponseEntity<StudentResponse> registerNewStudent(@RequestBody StudentRequest studentRequest) {
+        StudentResponse created = studentService.addNewStudent(studentRequest);
+        return ResponseEntity.status(201).body(created);
     }
 
-    @DeleteMapping(path = "{studentId}")
+    @DeleteMapping(path = "/{studentId}")
     public void deleteStudent(@PathVariable Long studentId) {
         studentService.deleteStudent(studentId);
     }
 
 
     // TODO: PathVariable ve RequestParam farkı ???
-    @PutMapping(path = "{studentId}")
-    public ResponseEntity<Student> updateStudent(@PathVariable Long studentId, @RequestParam(required = false) String name) {
-        Student updated = studentService.updateStudent(studentId, name);
+    @PutMapping(path = "/{studentId}")
+    public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long studentId, @RequestBody StudentRequest studentRequest) {
+        StudentResponse updated = studentService.updateStudent(studentId, studentRequest);
         return ResponseEntity.ok().body(updated);
     }
 

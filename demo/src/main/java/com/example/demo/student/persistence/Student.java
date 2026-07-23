@@ -26,7 +26,7 @@ public class Student {
     private Long id;
     @Column(nullable = false)
     private String name;
-    private LocalDate DateOfBirth;
+    private LocalDate dateOfBirth;
     @Transient
     private Integer age;
 
@@ -41,24 +41,24 @@ public class Student {
     @ToString.Exclude
     private Set<Teacher> teachers;
 
-    
+
     public Student() {
     }
 
-    public Student(Long id, String name, LocalDate DateOfBirth) {
+    public Student(Long id, String name, LocalDate dateOfBirth) {
         this.id = id;
         this.name = name;
-        this.DateOfBirth = DateOfBirth;
+        this.dateOfBirth = dateOfBirth;
     }
 
-    public Student(String name, LocalDate DateOfBirth) {
+    public Student(String name, LocalDate dateOfBirth) {
         this.name = name;
-        this.DateOfBirth = DateOfBirth;
+        this.dateOfBirth = dateOfBirth;
     }
 
 
     public Integer getAge() {
-        return Period.between(DateOfBirth, LocalDate.now()).getYears();
+        return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 
 

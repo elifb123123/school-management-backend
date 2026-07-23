@@ -8,4 +8,5 @@ public interface SchoolRepository extends JpaRepository<School, Long> {
     Optional<School> findSchoolBySchoolName(String schoolName);
 
     boolean existsBySchoolName(String schoolName);
+
 }

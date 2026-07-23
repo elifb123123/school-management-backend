@@ -46,8 +46,8 @@ public class SchoolServiceImpl implements SchoolService {
 
     @Override
     public void addNewSchool(SchoolRequest schoolRequest) {
-        if (schoolRepository.existsBySchoolName(schoolRequest.getSchoolName())) {
-            throw new IllegalStateException("School name already exists: " + schoolRequest.getSchoolName());
+        if (schoolRepository.existsBySchoolName(schoolRequest.schoolName())) {
+            throw new IllegalStateException("School name already exists: " + schoolRequest.schoolName());
         }
         schoolRepository.save(schoolMapper.toEntity(schoolRequest));
     }
