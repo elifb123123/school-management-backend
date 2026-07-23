@@ -1,39 +1,55 @@
 package com.example.demo.school.service;
 
+import com.example.demo.school.dto.SchoolRequest;
+import com.example.demo.school.dto.SchoolResponse;
+import com.example.demo.school.mapper.SchoolMapper;
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @Transactional
 public class SchoolServiceImpl implements SchoolService {
 
     private final SchoolRepository schoolRepository;
+    // 2. DTO <-> Entity dönüşümleri için
+    private final SchoolMapper schoolMapper;
 
     @Autowired
-    public SchoolServiceImpl(SchoolRepository schoolRepository) {
+    public SchoolServiceImpl(SchoolRepository schoolRepository, SchoolMapper schoolMapper) {
         this.schoolRepository = schoolRepository;
+        this.schoolMapper = schoolMapper;
     }
 
     @Override
-    public List<School> getSchools() {
-        return schoolRepository.findAll();
+    public List<SchoolResponse> getSchools() {
+        List<School> schoolList = schoolRepository.findAll();
+        return schoolMapper.toResponseList(schoolList);
     }
 
     @Override
-    public void addNewSchool(School school) {
-        Optional<School> schoolOptional = schoolRepository.findSchoolBySchoolName(school.getSchoolName());
-        if (schoolOptional.isPresent()) {
-            throw new IllegalStateException("School name already exists.");
+    public SchoolResponse getSchoolById(Long schoolId) {
+        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new IllegalStateException("School " + schoolId + " does not exist"));
+        return schoolMapper.toResponse(school);
+    }
+
+    public SchoolResponse getSchoolByName(String schoolName) {
+        School school = schoolRepository.findSchoolBySchoolName(schoolName).orElseThrow(() -> new IllegalStateException("School " + schoolName + " does not exist"));
+        return schoolMapper.toResponse(school);
+    }
+
+    @Override
+    public void addNewSchool(SchoolRequest schoolRequest) {
+        if (schoolRepository.existsBySchoolName(schoolRequest.getSchoolName())) {
+            throw new IllegalStateException("School name already exists: " + schoolRequest.getSchoolName());
         }
-        schoolRepository.save(school);
-        System.out.println(school);
+        schoolRepository.save(schoolMapper.toEntity(schoolRequest));
     }
 
     @Override
@@ -49,20 +65,13 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
     @Override
-    public School updateSchool(Long schoolId, String schoolName) {
+    public SchoolResponse updateSchool(Long schoolId, SchoolRequest schoolRequest) {
 
-        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new IllegalStateException("School " + schoolId + " does not exist"));
-
-        if (schoolName != null && schoolName.length() > 0 &&
-                !Objects.equals(school.getSchoolName(), schoolName)) {
-            school.setSchoolName(schoolName);
-        }
-        return school;
+        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
+        schoolMapper.updateSchoolFromDto(schoolRequest, school);
+        School updatedSchool = schoolRepository.save(school);
+        return schoolMapper.toResponse(updatedSchool);
     }
 
-    @Override
-    public School searchSchool(Long schoolId) {
-        System.out.println(schoolRepository.findById(schoolId));
-        return schoolRepository.findById(schoolId).orElseThrow(() -> new IllegalStateException("School " + schoolId + " does not exist"));
-    }
+
 }

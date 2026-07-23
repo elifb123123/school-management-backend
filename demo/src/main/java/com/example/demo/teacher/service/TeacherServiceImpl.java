@@ -1,6 +1,5 @@
 package com.example.demo.teacher.service;
 
-import com.example.demo.school.persistence.School;
 import com.example.demo.school.service.SchoolService;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
@@ -35,8 +34,8 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     public Teacher createTeacher(Teacher teacher, Long schoolId) {
 
-        School school = schoolService.searchSchool(schoolId);
-        teacher.setSchool(school);
+//        School school = schoolService.getSchoolById(schoolId);
+//        teacher.setSchool(school);
         return teacherRepository.save(teacher);
     }
 

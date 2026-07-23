@@ -1,6 +1,7 @@
 package com.example.demo.school.controller;
 
-import com.example.demo.school.persistence.School;
+import com.example.demo.school.dto.SchoolRequest;
+import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.school.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,29 +21,35 @@ public class SchoolController {
     }
 
     @GetMapping
-    public List<School> getSchools() {
+    public List<SchoolResponse> getSchools() {
         return schoolService.getSchools();
     }
 
-    @GetMapping(path = "{schoolId}")
-    public School searchSchool(@PathVariable Long schoolId) {
-        return schoolService.searchSchool(schoolId);
+    @GetMapping(path = "/{schoolId}")
+    public SchoolResponse getSchoolById(@PathVariable Long schoolId) {
+        return schoolService.getSchoolById(schoolId);
+    }
+
+    @GetMapping("/search")
+    public SchoolResponse getSchoolByName(@RequestParam String name) {
+        return schoolService.getSchoolByName(name);
     }
 
     @PostMapping
-    public ResponseEntity<School> registerNewSchool(@RequestBody School school) {
-        schoolService.addNewSchool(school);
-        return ResponseEntity.status(201).body(school);
+    public ResponseEntity<Void> registerNewSchool(@RequestBody SchoolRequest schoolRequest) {
+        schoolService.addNewSchool(schoolRequest);
+        return ResponseEntity.status(201).build();//201 for created
     }
 
-    @DeleteMapping(path = "{schoolId}")
-    public void deleteSchool(@PathVariable Long schoolId) {
+    @DeleteMapping("/{schoolId}")
+    public ResponseEntity<Void> deleteSchool(@PathVariable Long schoolId) {
         schoolService.deleteSchool(schoolId);
+        return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(path = "{schoolId}")
-    public ResponseEntity<School> updateSchool(@PathVariable Long schoolId, @RequestParam(required = false) String schoolName) {
-        School updated = schoolService.updateSchool(schoolId, schoolName);
+    @PutMapping("/{schoolId}")
+    public ResponseEntity<SchoolResponse> updateSchool(@PathVariable Long schoolId, @RequestBody SchoolRequest schoolRequest) {
+        SchoolResponse updated = schoolService.updateSchool(schoolId, schoolRequest);
         return ResponseEntity.ok().body(updated);
     }
 }

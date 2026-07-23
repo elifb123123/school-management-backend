@@ -1,18 +1,23 @@
 package com.example.demo.school.service;
 
-import com.example.demo.school.persistence.School;
+import com.example.demo.school.dto.SchoolRequest;
+import com.example.demo.school.dto.SchoolResponse;
 
 import java.util.List;
 
 public interface SchoolService {
 
-    List<School> getSchools();
+    List<SchoolResponse> getSchools();
 
-    void addNewSchool(School school);
+    SchoolResponse getSchoolById(Long schoolId);
+
+    SchoolResponse getSchoolByName(String name);
+
+    void addNewSchool(SchoolRequest schoolRequest);
 
     void deleteSchool(Long schoolId);
 
-    School updateSchool(Long schoolId, String schoolName);
+    SchoolResponse updateSchool(Long schoolId, SchoolRequest schoolRequest);
 
-    School searchSchool(Long schoolId);
+
 }
