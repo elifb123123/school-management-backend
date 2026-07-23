@@ -1,6 +1,7 @@
 package com.example.demo.teacher.controller;
 
-import com.example.demo.teacher.persistence.Teacher;
+import com.example.demo.teacher.dto.TeacherRequest;
+import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,23 +23,30 @@ public class TeacherController {
 
     // GET /api/teachers
     @GetMapping
-    public List<Teacher> getTeachers() {
+    public List<TeacherResponse> getTeachers() {
         return teacherService.getTeachers();
     }
 
     // GET /api/teachers/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Teacher> getTeacherById(@PathVariable Long id) {
-        Teacher teacher = teacherService.getTeacherById(id);
+    public ResponseEntity<TeacherResponse> getTeacherById(@PathVariable Long id) {
+        TeacherResponse teacher = teacherService.getTeacherById(id);
         return ResponseEntity.ok(teacher);
     }
 
     // POST /api/{schoolID}/teachers
     @PostMapping("/{schoolId}/teachers")
-    public ResponseEntity<Teacher> createTeacher(@PathVariable Long schoolId, @RequestBody Teacher teacher) {
+    public ResponseEntity<TeacherResponse> createTeacher(@PathVariable Long schoolId, @RequestBody TeacherRequest teacherRequest) {
         //Don't want orphan teachers
-        Teacher created = teacherService.createTeacher(teacher, schoolId);
+        TeacherResponse created = teacherService.createTeacher(teacherRequest, schoolId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    // PUT /api/teachers/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<TeacherResponse> updateTeacher(@PathVariable Long id, @RequestBody TeacherRequest teacherRequest) {
+        TeacherResponse updated = teacherService.updateTeacher(teacherRequest, id);
+        return ResponseEntity.ok(updated);
     }
 
     // DELETE /api/teachers/{id}

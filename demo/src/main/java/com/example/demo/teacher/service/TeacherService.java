@@ -1,6 +1,7 @@
 package com.example.demo.teacher.service;
 
-import com.example.demo.teacher.persistence.Teacher;
+import com.example.demo.teacher.dto.TeacherRequest;
+import com.example.demo.teacher.dto.TeacherResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,16 +10,17 @@ import java.util.List;
 public interface TeacherService {
 
     // Tüm öğretmenleri listele (Zaten var)
-    List<Teacher> getTeachers();
+    List<TeacherResponse> getTeachers();
 
     // ID'ye göre tek bir öğretmen getir
-    Teacher getTeacherById(Long id);
+    TeacherResponse getTeacherById(Long id);
 
     // Yeni öğretmen kaydet
 
-    Teacher createTeacher(Teacher teacher, Long schoolId);
+    TeacherResponse createTeacher(TeacherRequest teacherRequest, Long schoolId);
 
     // Var olan öğretmeni güncelle
+    TeacherResponse updateTeacher(TeacherRequest teacherRequest, Long TeacherId);
 
     // ID'ye göre öğretmen sil
     void deleteTeacher(Long id);
