@@ -1,5 +1,10 @@
 package com.example.demo.student.service;
 
+import com.example.demo.school.persistence.School;
+import com.example.demo.school.persistence.SchoolRepository;
+import com.example.demo.student.dto.StudentRequest;
+import com.example.demo.student.dto.StudentResponse;
+import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.student.persistence.Student;
 import com.example.demo.student.persistence.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,58 +13,78 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @Transactional
 public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
+    private final SchoolRepository schoolRepository;
+    private final StudentMapper studentMapper;
 
     @Autowired
-    public StudentServiceImpl(StudentRepository studentRepository) {
+    public StudentServiceImpl(StudentRepository studentRepository,
+                              SchoolRepository schoolRepository,
+                              StudentMapper studentMapper) {
         this.studentRepository = studentRepository;
+        this.schoolRepository = schoolRepository;
+        this.studentMapper = studentMapper;
     }
 
-    public List<Student> getStudents() {
-        return studentRepository.findAll();
-
+    public List<StudentResponse> getStudents() {
+        return studentMapper.toResponseList(studentRepository.findAll());
     }
 
-    public void addNewStudent(Student student) {
-        Optional<Student> studentOptional = studentRepository.findStudentByName(student.getName());
-        if (studentOptional.isPresent()) {
-            throw new IllegalStateException("Name taken.");
-        }
-        studentRepository.save(student);
-        System.out.println(student);
+    public StudentResponse addNewStudent(StudentRequest studentRequest) {
+        studentRepository.findStudentByName(studentRequest.name())
+                .ifPresent(s -> {
+                    throw new IllegalStateException("Name taken.");
+                });
 
+        Student student = studentMapper.toEntity(studentRequest);
+        student.setSchool(resolveSchool(studentRequest.schoolName()));
+
+        Student saved = studentRepository.save(student);
+        return studentMapper.toResponse(saved);
     }
 
     public void deleteStudent(Long studentId) {
-        System.out.println("Servise gelen id: " + studentId);
-
-        boolean exists = studentRepository.existsById(studentId);
-
-        if (!exists) {
-            throw new IllegalStateException(" student " + studentId + "does not exist");
+        if (!studentRepository.existsById(studentId)) {
+            throw new IllegalStateException("Student " + studentId + " does not exist");
         }
         studentRepository.deleteById(studentId);
     }
 
-    public Student updateStudent(Long studentId, String name) {
+    public StudentResponse updateStudent(Long studentId, StudentRequest studentRequest) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalStateException("Student " + studentId + " does not exist"));
 
-        Student student = studentRepository.findById(studentId).orElseThrow(() -> new IllegalStateException(" student " + studentId + "does not exist"));
-
-        if (name != null && name.length() > 0 &&
-                !Objects.equals(student.getName(), name)) {
-            student.setName(name);
+        if (studentRequest.name() != null && !studentRequest.name().isBlank()
+                && !Objects.equals(student.getName(), studentRequest.name())) {
+            student.setName(studentRequest.name());
         }
-        return student;
+
+        if (studentRequest.dateOfBirth() != null
+                && !Objects.equals(student.getDateOfBirth(), studentRequest.dateOfBirth())) {
+            student.setDateOfBirth(studentRequest.dateOfBirth());
+        }
+
+        if (studentRequest.schoolName() != null && !studentRequest.schoolName().isBlank()) {
+            student.setSchool(resolveSchool(studentRequest.schoolName()));
+        }
+
+        // no explicit save() needed — @Transactional + managed entity triggers dirty checking on commit
+        return studentMapper.toResponse(student);
     }
 
-    public Student searchStudent(Long studentId) {
-        System.out.println(studentRepository.findById(studentId));
-        return studentRepository.findById(studentId).orElseThrow(() -> new IllegalStateException(" student " + studentId + "does not exist"));
+    public StudentResponse searchStudent(Long studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalStateException("Student " + studentId + " does not exist"));
+        return studentMapper.toResponse(student);
+    }
+
+    private School resolveSchool(String schoolName) {
+        return schoolRepository.findSchoolBySchoolName(schoolName)
+                .orElseThrow(() -> new IllegalStateException("School '" + schoolName + "' does not exist"));
     }
 }

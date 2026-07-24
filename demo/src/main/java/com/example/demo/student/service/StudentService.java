@@ -1,18 +1,19 @@
 package com.example.demo.student.service;
 
-import com.example.demo.student.persistence.Student;
+import com.example.demo.student.dto.StudentRequest;
+import com.example.demo.student.dto.StudentResponse;
 
 import java.util.List;
 
 public interface StudentService {
 
-    List<Student> getStudents();
+    List<StudentResponse> getStudents();
 
-    void addNewStudent(Student student);
+    StudentResponse addNewStudent(StudentRequest studentRequest);
 
     void deleteStudent(Long studentId);
 
-    Student updateStudent(Long studentId, String name);
+    StudentResponse updateStudent(Long studentId, StudentRequest studentRequest);
 
-    Student searchStudent(Long studentId);
+    StudentResponse searchStudent(Long studentId);
 }
