@@ -26,9 +26,11 @@ public class Student {
     private Long id;
     @Column(nullable = false)
     private String name;
+    private String email;
     private LocalDate dateOfBirth;
     @Transient
     private Integer age;
+
 
     @ManyToOne
     @JoinColumn(name = "school_id", referencedColumnName = "id")
@@ -45,14 +47,15 @@ public class Student {
     public Student() {
     }
 
-    public Student(Long id, String name, LocalDate dateOfBirth) {
+    public Student(Long id, String name, String email, LocalDate dateOfBirth) {
         this.id = id;
         this.name = name;
         this.dateOfBirth = dateOfBirth;
     }
 
-    public Student(String name, LocalDate dateOfBirth) {
+    public Student(String name, String email, LocalDate dateOfBirth) {
         this.name = name;
+        this.email = email;
         this.dateOfBirth = dateOfBirth;
     }
 

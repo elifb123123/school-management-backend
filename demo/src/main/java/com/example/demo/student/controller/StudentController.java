@@ -3,6 +3,7 @@ package com.example.demo.student.controller;
 import com.example.demo.student.dto.StudentRequest;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.service.StudentService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +29,13 @@ public class StudentController {
     }
 
     @GetMapping(path = "/{studentId}")
-    public StudentResponse searchStudent(@PathVariable Long studentId) {
+    public StudentResponse getStudentById(@PathVariable Long studentId) {
         return studentService.searchStudent(studentId);
     }
 
     // TODO: RequestBody ??
     @PostMapping
-    public ResponseEntity<StudentResponse> registerNewStudent(@RequestBody StudentRequest studentRequest) {
+    public ResponseEntity<StudentResponse> registerNewStudent(@RequestBody @Valid StudentRequest studentRequest) {
         StudentResponse created = studentService.addNewStudent(studentRequest);
         return ResponseEntity.status(201).body(created);
     }
@@ -44,7 +45,6 @@ public class StudentController {
         studentService.deleteStudent(studentId);
     }
 
-
     // TODO: PathVariable ve RequestParam farkı ???
     @PutMapping(path = "/{studentId}")
     public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long studentId, @RequestBody StudentRequest studentRequest) {
@@ -53,3 +53,5 @@ public class StudentController {
     }
 
 }
+
+

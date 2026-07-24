@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public record StudentResponse(
         Long id,
         String name,
+        String email,
         LocalDate dateOfBirth,
         Integer age,
         String schoolName
