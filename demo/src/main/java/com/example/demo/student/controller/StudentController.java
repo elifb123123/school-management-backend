@@ -52,6 +52,12 @@ public class StudentController {
         return ResponseEntity.ok().body(updated);
     }
 
+
+    // --- ÖĞRETMEN - ÖĞRENCİ İLİŞKİ İŞLEMLERİ (Alt Kaynaklar) ---
+    // Öğrenciye Öğretmen Ekle (Kayıt) @PostMapping("/{studentId}/teachers/{teacherId}")
+    // Öğrencinin Öğretmen Kaydını Sil  @DeleteMapping("/{studentId}/teachers/{teacherId}")
+    // Öğrencinin Ders Aldığı Öğretmenleri Getir  @GetMapping("/{studentId}/teachers")
+
 }
 
 
