@@ -10,4 +10,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     //  SELECT * FROM STUDENT s WHERE s.name= ?1
     Optional<Student> findStudentByName(String name);
+
+    boolean existsByEmail(String email);
 }

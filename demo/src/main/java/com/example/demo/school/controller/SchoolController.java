@@ -49,7 +49,7 @@ public class SchoolController {
     }
 
     @PutMapping("/{schoolId}")
-    public ResponseEntity<SchoolResponse> updateSchool(@PathVariable Long schoolId, @RequestBody SchoolRequest schoolRequest) {
+    public ResponseEntity<SchoolResponse> updateSchool(@PathVariable Long schoolId, @RequestBody @Valid SchoolRequest schoolRequest) {
         SchoolResponse updated = schoolService.updateSchool(schoolId, schoolRequest);
         return ResponseEntity.ok().body(updated);
     }

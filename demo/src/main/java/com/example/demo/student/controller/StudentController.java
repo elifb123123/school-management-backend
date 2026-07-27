@@ -47,7 +47,7 @@ public class StudentController {
 
     // TODO: PathVariable ve RequestParam farkı ???
     @PutMapping(path = "/{studentId}")
-    public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long studentId, @RequestBody StudentRequest studentRequest) {
+    public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long studentId, @RequestBody @Valid StudentRequest studentRequest) {
         StudentResponse updated = studentService.updateStudent(studentId, studentRequest);
         return ResponseEntity.ok().body(updated);
     }

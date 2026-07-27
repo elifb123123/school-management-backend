@@ -45,7 +45,7 @@ public class TeacherController {
 
     // PUT /api/teachers/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<TeacherResponse> updateTeacher(@PathVariable Long id, @RequestBody TeacherRequest teacherRequest) {
+    public ResponseEntity<TeacherResponse> updateTeacher(@PathVariable Long id, @RequestBody @Valid TeacherRequest teacherRequest) {
         TeacherResponse updated = teacherService.updateTeacher(teacherRequest, id);
         return ResponseEntity.ok(updated);
     }
