@@ -1,5 +1,7 @@
 package com.example.demo.student.service;
 
+import com.example.demo.exception.ResourceAlreadyExistsException;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
 import com.example.demo.student.dto.StudentRequest;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @Transactional
@@ -36,10 +37,9 @@ public class StudentServiceImpl implements StudentService {
     }
 
     public StudentResponse addNewStudent(StudentRequest studentRequest) {
-        studentRepository.findStudentByName(studentRequest.name())
-                .ifPresent(s -> {
-                    throw new IllegalStateException("Name taken.");
-                });
+        if (studentRepository.existsByEmail(studentRequest.email())) {
+            throw new ResourceAlreadyExistsException("Student", "email", studentRequest.email());
+        }
 
         Student student = studentMapper.toEntity(studentRequest);
         student.setSchool(resolveSchool(studentRequest.schoolName()));
@@ -50,28 +50,19 @@ public class StudentServiceImpl implements StudentService {
 
     public void deleteStudent(Long studentId) {
         if (!studentRepository.existsById(studentId)) {
-            throw new IllegalStateException("Student " + studentId + " does not exist");
+            throw new ResourceNotFoundException("Student ", "id", studentId);
         }
         studentRepository.deleteById(studentId);
     }
 
+    @Override
     public StudentResponse updateStudent(Long studentId, StudentRequest studentRequest) {
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalStateException("Student " + studentId + " does not exist"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student", "id", studentId));
 
-        if (studentRequest.name() != null && !studentRequest.name().isBlank()
-                && !Objects.equals(student.getName(), studentRequest.name())) {
-            student.setName(studentRequest.name());
-        }
-
-        if (studentRequest.dateOfBirth() != null
-                && !Objects.equals(student.getDateOfBirth(), studentRequest.dateOfBirth())) {
-            student.setDateOfBirth(studentRequest.dateOfBirth());
-        }
-
-        if (studentRequest.schoolName() != null && !studentRequest.schoolName().isBlank()) {
-            student.setSchool(resolveSchool(studentRequest.schoolName()));
-        }
+        student.setName(studentRequest.name());
+        student.setDateOfBirth(studentRequest.dateOfBirth());
+        student.setSchool(resolveSchool(studentRequest.schoolName()));
 
         // no explicit save() needed — @Transactional + managed entity triggers dirty checking on commit
         return studentMapper.toResponse(student);
@@ -79,12 +70,12 @@ public class StudentServiceImpl implements StudentService {
 
     public StudentResponse searchStudent(Long studentId) {
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalStateException("Student " + studentId + " does not exist"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student ", "id", studentId));
         return studentMapper.toResponse(student);
     }
 
     private School resolveSchool(String schoolName) {
         return schoolRepository.findSchoolBySchoolName(schoolName)
-                .orElseThrow(() -> new IllegalStateException("School '" + schoolName + "' does not exist"));
+                .orElseThrow(() -> new ResourceNotFoundException("School ", "school name", schoolName));
     }
 }

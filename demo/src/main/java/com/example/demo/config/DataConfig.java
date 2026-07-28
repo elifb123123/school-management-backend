@@ -30,8 +30,8 @@ public class DataConfig {
             }
 
             if (studentRepository.findAll().isEmpty()) {
-                Student ayse = new Student("ayse", LocalDate.of(2003, Month.MARCH, 5));
-                Student alex = new Student("alex", LocalDate.of(2003, Month.MARCH, 5));
+                Student ayse = new Student("ayse", "ayse@gmail.com", LocalDate.of(2003, Month.MARCH, 5));
+                Student alex = new Student("alex", "alex@gmail.com", LocalDate.of(2003, Month.MARCH, 5));
                 ayse.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
                 alex.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
                 studentRepository.saveAll(List.of(ayse, alex));

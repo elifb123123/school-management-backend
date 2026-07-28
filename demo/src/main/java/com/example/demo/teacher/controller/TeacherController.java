@@ -3,6 +3,7 @@ package com.example.demo.teacher.controller;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.service.TeacherService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,7 @@ public class TeacherController {
 
     // POST /api/{schoolID}/teachers
     @PostMapping("/{schoolId}/teachers")
-    public ResponseEntity<TeacherResponse> createTeacher(@PathVariable Long schoolId, @RequestBody TeacherRequest teacherRequest) {
+    public ResponseEntity<TeacherResponse> createTeacher(@PathVariable Long schoolId, @RequestBody @Valid TeacherRequest teacherRequest) {
         //Don't want orphan teachers
         TeacherResponse created = teacherService.createTeacher(teacherRequest, schoolId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -44,7 +45,7 @@ public class TeacherController {
 
     // PUT /api/teachers/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<TeacherResponse> updateTeacher(@PathVariable Long id, @RequestBody TeacherRequest teacherRequest) {
+    public ResponseEntity<TeacherResponse> updateTeacher(@PathVariable Long id, @RequestBody @Valid TeacherRequest teacherRequest) {
         TeacherResponse updated = teacherService.updateTeacher(teacherRequest, id);
         return ResponseEntity.ok(updated);
     }

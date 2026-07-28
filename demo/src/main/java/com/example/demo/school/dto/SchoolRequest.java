@@ -1,4 +1,8 @@
 package com.example.demo.school.dto;
 
-public record SchoolRequest(String schoolName) {
+import jakarta.validation.constraints.NotBlank;
+
+public record SchoolRequest(
+        @NotBlank
+        String schoolName) {
 }

@@ -3,6 +3,7 @@ package com.example.demo.school.controller;
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.school.service.SchoolService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class SchoolController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> registerNewSchool(@RequestBody SchoolRequest schoolRequest) {
+    public ResponseEntity<Void> registerNewSchool(@RequestBody @Valid SchoolRequest schoolRequest) {
         schoolService.addNewSchool(schoolRequest);
         return ResponseEntity.status(201).build();//201 for created
     }
@@ -48,7 +49,7 @@ public class SchoolController {
     }
 
     @PutMapping("/{schoolId}")
-    public ResponseEntity<SchoolResponse> updateSchool(@PathVariable Long schoolId, @RequestBody SchoolRequest schoolRequest) {
+    public ResponseEntity<SchoolResponse> updateSchool(@PathVariable Long schoolId, @RequestBody @Valid SchoolRequest schoolRequest) {
         SchoolResponse updated = schoolService.updateSchool(schoolId, schoolRequest);
         return ResponseEntity.ok().body(updated);
     }

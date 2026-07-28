@@ -1,5 +1,7 @@
 package com.example.demo.school.service;
 
+import com.example.demo.exception.ResourceAlreadyExistsException;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.school.mapper.SchoolMapper;
@@ -35,19 +37,19 @@ public class SchoolServiceImpl implements SchoolService {
 
     @Override
     public SchoolResponse getSchoolById(Long schoolId) {
-        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new IllegalStateException("School " + schoolId + " does not exist"));
+        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
         return schoolMapper.toResponse(school);
     }
 
     public SchoolResponse getSchoolByName(String schoolName) {
-        School school = schoolRepository.findSchoolBySchoolName(schoolName).orElseThrow(() -> new IllegalStateException("School " + schoolName + " does not exist"));
+        School school = schoolRepository.findSchoolBySchoolName(schoolName).orElseThrow(() -> new ResourceNotFoundException("School ", "school name", schoolName));
         return schoolMapper.toResponse(school);
     }
 
     @Override
     public void addNewSchool(SchoolRequest schoolRequest) {
         if (schoolRepository.existsBySchoolName(schoolRequest.schoolName())) {
-            throw new IllegalStateException("School name already exists: " + schoolRequest.schoolName());
+            throw new ResourceAlreadyExistsException("School", "school name", schoolRequest.schoolName());
         }
         schoolRepository.save(schoolMapper.toEntity(schoolRequest));
     }
@@ -59,7 +61,7 @@ public class SchoolServiceImpl implements SchoolService {
         boolean exists = schoolRepository.existsById(schoolId);
 
         if (!exists) {
-            throw new IllegalStateException("School " + schoolId + " does not exist");
+            throw new ResourceNotFoundException("School ", "id", schoolId);
         }
         schoolRepository.deleteById(schoolId);
     }
