@@ -3,7 +3,6 @@ package com.example.demo.student.persistence;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.teacher.persistence.Teacher;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,14 +33,10 @@ public class Student {
 
 
     @ManyToOne
-    @JoinColumn(name = "school_id", referencedColumnName = "id")
-    @JsonIgnoreProperties({"students", "teachers"})
-    @ToString.Exclude
+    @JoinColumn(name = "school_id", referencedColumnName = "schoolId")
     private School school;
 
-    @JsonIgnoreProperties({"students", "school"})
-    @ManyToMany
-    @ToString.Exclude
+    @ManyToMany(mappedBy = "students")
     private Set<Teacher> teachers;
 
 

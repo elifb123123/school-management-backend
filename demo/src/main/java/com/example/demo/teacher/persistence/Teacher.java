@@ -2,9 +2,11 @@ package com.example.demo.teacher.persistence;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.student.persistence.Student;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,9 +26,7 @@ public class Teacher {
     private String name;
 
     @ManyToOne
-    @JoinColumn(name = "school_id", referencedColumnName = "id")
-    @JsonIgnoreProperties({"students", "teachers"})
-    @ToString.Exclude
+    @JoinColumn(name = "school_id", referencedColumnName = "schoolId")
     private School school;
 
     @ManyToMany
@@ -35,8 +35,6 @@ public class Teacher {
             joinColumns = @JoinColumn(name = "teacher_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
     )
-    @JsonIgnoreProperties({"teachers", "school"})
-    @ToString.Exclude
     private Set<Student> students = new HashSet<>();
 
 

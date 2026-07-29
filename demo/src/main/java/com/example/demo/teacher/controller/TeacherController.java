@@ -56,4 +56,9 @@ public class TeacherController {
         teacherService.deleteTeacher(id);
         return ResponseEntity.noContent().build();
     }
+
+//    @GetMapping("/{id}/students")
+//    public ResponseEntity<List<StudentResponse>> getStudentsOfTeacher(@PathVariable Long teacherId) {
+//        return ResponseEntity.ok(teacherService.getStudentsOfTeacher(teacherId));
+//    }
 }

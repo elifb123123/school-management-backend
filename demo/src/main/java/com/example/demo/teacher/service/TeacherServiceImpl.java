@@ -22,6 +22,7 @@ public class TeacherServiceImpl implements TeacherService {
     private final TeacherRepository teacherRepository;
     private final SchoolRepository schoolRepository;
     private final TeacherMapper teacherMapper;
+//    private final StudentService studentService;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,4 +74,39 @@ public class TeacherServiceImpl implements TeacherService {
         }
         teacherRepository.deleteById(id);
     }
+
+    @Override
+    public boolean existsById(Long id) {
+        return teacherRepository.existsById(id);
+    }
+
+    @Override
+    public boolean existsRelation(Long teacherId, Long studentId) {
+        return teacherRepository.existsTeacherStudentRelation(teacherId, studentId);
+    }
+
+    @Override
+    public void linkStudent(Long teacherId, Long studentId) {
+        teacherRepository.insertTeacherStudentRelation(teacherId, studentId);
+    }
+
+    @Override
+    public void unlinkStudent(Long teacherId, Long studentId) {
+        teacherRepository.deleteTeacherStudentRelation(teacherId, studentId);
+    }
+
+    @Override
+    public List<TeacherResponse> getTeachersByStudentId(Long studentId) {
+        List<Teacher> teachers = teacherRepository.findAllByStudentsId(studentId);
+        return teacherMapper.toResponseList(teachers);
+    }
+
+//    @Override
+//    @Transactional(readOnly = true)
+//    public List<StudentResponse> getStudentsOfTeacher(Long teacherId) {
+//        if (!teacherRepository.existsById(teacherId)) {
+//            throw new ResourceNotFoundException("Teacher", "id", teacherId);
+//        }
+//        // return studentService.getStudentsByTeacherId(teacherId);
+//    }
 }

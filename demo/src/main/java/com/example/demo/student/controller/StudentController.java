@@ -3,6 +3,7 @@ package com.example.demo.student.controller;
 import com.example.demo.student.dto.StudentRequest;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.service.StudentService;
+import com.example.demo.teacher.dto.TeacherResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +58,22 @@ public class StudentController {
     // Öğrenciye Öğretmen Ekle (Kayıt) @PostMapping("/{studentId}/teachers/{teacherId}")
     // Öğrencinin Öğretmen Kaydını Sil  @DeleteMapping("/{studentId}/teachers/{teacherId}")
     // Öğrencinin Ders Aldığı Öğretmenleri Getir  @GetMapping("/{studentId}/teachers")
+
+    @PostMapping("/{studentId}/teachers/{teacherId}")
+    public ResponseEntity<Void> addTeacherToStudent(@PathVariable Long studentId, @PathVariable Long teacherId) {
+        studentService.addTeacherToStudent(studentId, teacherId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{studentId}/teachers/{teacherId}")
+    public void deleteTeacherFromStudent(@PathVariable Long studentId, @PathVariable Long teacherId) {
+        studentService.deleteTeacherFromStudent(studentId, teacherId);
+    }
+
+    @GetMapping("/{studentId}/teachers")
+    public List<TeacherResponse> getTeachersOfStudent(@PathVariable Long studentId) {
+        return studentService.getTeachersOfStudent(studentId);
+    }
 
 }
 

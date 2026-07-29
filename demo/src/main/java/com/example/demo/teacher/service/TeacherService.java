@@ -24,4 +24,17 @@ public interface TeacherService {
 
     // ID'ye göre öğretmen sil
     void deleteTeacher(Long id);
+
+    boolean existsById(Long id);
+
+    boolean existsRelation(Long teacherId, Long studentId);
+
+    void linkStudent(Long teacherId, Long studentId);
+
+    void unlinkStudent(Long teacherId, Long studentId);
+
+    List<TeacherResponse> getTeachersByStudentId(Long studentId);
+
+//    List<StudentResponse> getStudentsOfTeacher(Long teacherId);
+
 }

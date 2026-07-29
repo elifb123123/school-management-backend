@@ -9,6 +9,8 @@ import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.student.persistence.Student;
 import com.example.demo.student.persistence.StudentRepository;
+import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.teacher.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,14 +24,17 @@ public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
     private final SchoolRepository schoolRepository;
     private final StudentMapper studentMapper;
+    private final TeacherService teacherService;
 
     @Autowired
     public StudentServiceImpl(StudentRepository studentRepository,
                               SchoolRepository schoolRepository,
-                              StudentMapper studentMapper) {
+                              StudentMapper studentMapper,
+                              TeacherService teacherService) {
         this.studentRepository = studentRepository;
         this.schoolRepository = schoolRepository;
         this.studentMapper = studentMapper;
+        this.teacherService = teacherService;
     }
 
     public List<StudentResponse> getStudents() {
@@ -77,5 +82,45 @@ public class StudentServiceImpl implements StudentService {
     private School resolveSchool(String schoolName) {
         return schoolRepository.findSchoolBySchoolName(schoolName)
                 .orElseThrow(() -> new ResourceNotFoundException("School ", "school name", schoolName));
+    }
+
+    public void addTeacherToStudent(Long studentId, Long teacherId) {
+        if (!studentRepository.existsById(studentId)) {
+            throw new ResourceNotFoundException("Student", "id", studentId);
+        }
+        if (!teacherService.existsById(teacherId)) {
+            throw new ResourceNotFoundException("Teacher", "id", teacherId);
+        }
+        if (teacherService.existsRelation(teacherId, studentId)) {          // ✅ studentRepository değil, teacherService
+            throw new ResourceAlreadyExistsException("Student-Teacher relation", "studentId-teacherId", studentId + "-" + teacherId);
+        }
+        teacherService.linkStudent(teacherId, studentId);                   // ✅ studentRepository değil, teacherService
+    }
+
+    public void deleteTeacherFromStudent(Long studentId, Long teacherId) {
+        if (!studentRepository.existsById(studentId)) {
+            throw new ResourceNotFoundException("Student", "id", studentId);
+        }
+        if (!teacherService.existsById(teacherId)) {
+            throw new ResourceNotFoundException("Teacher", "id", teacherId);
+        }
+        if (!teacherService.existsRelation(teacherId, studentId)) {         // ✅
+            throw new ResourceNotFoundException("Student-Teacher relation", "studentId-teacherId", studentId + "-" + teacherId);
+        }
+        teacherService.unlinkStudent(teacherId, studentId);                 // ✅
+    }
+
+    public List<TeacherResponse> getTeachersOfStudent(Long studentId) {
+        if (!studentRepository.existsById(studentId)) {
+            throw new ResourceNotFoundException("Student", "id", studentId);
+        }
+        return teacherService.getTeachersByStudentId(studentId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentResponse> getStudentsByTeacherId(Long teacherId) {
+        List<Student> students = studentRepository.findAllByTeachersId(teacherId);
+        return studentMapper.toResponseList(students);
     }
 }
