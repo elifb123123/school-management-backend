@@ -10,6 +10,7 @@ import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.student.persistence.Student;
 import com.example.demo.student.persistence.StudentRepository;
 import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,17 +25,20 @@ public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
     private final SchoolRepository schoolRepository;
     private final StudentMapper studentMapper;
-    private final TeacherService teacherService;
+    private final TeacherService teacherService;//owning side teacher bu yuzden student_teacher ilişkilerina ait fonksiyonlar oradan geliyor.
+    private final TeacherMapper teacherMapper;
 
     @Autowired
     public StudentServiceImpl(StudentRepository studentRepository,
                               SchoolRepository schoolRepository,
                               StudentMapper studentMapper,
-                              TeacherService teacherService) {
+                              TeacherService teacherService,
+                              TeacherMapper teacherMapper) {
         this.studentRepository = studentRepository;
         this.schoolRepository = schoolRepository;
         this.studentMapper = studentMapper;
         this.teacherService = teacherService;
+        this.teacherMapper = teacherMapper;
     }
 
     public List<StudentResponse> getStudents() {
@@ -114,13 +118,7 @@ public class StudentServiceImpl implements StudentService {
         if (!studentRepository.existsById(studentId)) {
             throw new ResourceNotFoundException("Student", "id", studentId);
         }
-        return teacherService.getTeachersByStudentId(studentId);
+        return teacherMapper.toResponseList(studentRepository.findTeachersByStudentId(studentId));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<StudentResponse> getStudentsByTeacherId(Long teacherId) {
-        List<Student> students = studentRepository.findAllByTeachersId(teacherId);
-        return studentMapper.toResponseList(students);
-    }
 }

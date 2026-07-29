@@ -24,5 +24,4 @@ public interface StudentService {
 
     List<TeacherResponse> getTeachersOfStudent(Long studentId);
 
-    List<StudentResponse> getStudentsByTeacherId(Long teacherId);
 }

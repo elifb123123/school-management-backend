@@ -26,12 +26,12 @@ public class Teacher {
     private String name;
 
     @ManyToOne
-    @JoinColumn(name = "school_id", referencedColumnName = "schoolId")
+    @JoinColumn(name = "school_id", referencedColumnName = "id")
     private School school;
 
     @ManyToMany
     @JoinTable(
-            name = "course",
+            name = "student_teacher",
             joinColumns = @JoinColumn(name = "teacher_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
     )

@@ -1,5 +1,6 @@
 package com.example.demo.teacher.controller;
 
+import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.service.TeacherService;
@@ -57,8 +58,29 @@ public class TeacherController {
         return ResponseEntity.noContent().build();
     }
 
-//    @GetMapping("/{id}/students")
-//    public ResponseEntity<List<StudentResponse>> getStudentsOfTeacher(@PathVariable Long teacherId) {
-//        return ResponseEntity.ok(teacherService.getStudentsOfTeacher(teacherId));
-//    }
+
+    @GetMapping("/{id}/students")
+    public ResponseEntity<List<StudentResponse>> getStudentsOfTeacher(@PathVariable Long id) {
+        return ResponseEntity.ok(teacherService.getStudentsOfTeacher(id));
+    }
+
+    // POST /api/teachers/1/students/5 -> Öğretmene öğrenci bağlar
+    @PostMapping("/{teacherId}/students/{studentId}")
+    public ResponseEntity<Void> addStudent(
+            @PathVariable Long teacherId,
+            @PathVariable Long studentId) {
+
+        teacherService.linkStudent(teacherId, studentId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    // DELETE /api/teachers/1/students/5 -> Öğretmenden öğrenciyi koparır
+    @DeleteMapping("/{teacherId}/students/{studentId}")
+    public ResponseEntity<Void> removeStudent(
+            @PathVariable Long teacherId,
+            @PathVariable Long studentId) {
+
+        teacherService.unlinkStudent(teacherId, studentId);
+        return ResponseEntity.noContent().build();
+    }
 }

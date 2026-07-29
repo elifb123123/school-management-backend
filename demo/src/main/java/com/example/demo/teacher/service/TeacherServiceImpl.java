@@ -3,6 +3,8 @@ package com.example.demo.teacher.service;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
+import com.example.demo.student.dto.StudentResponse;
+import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
@@ -22,7 +24,7 @@ public class TeacherServiceImpl implements TeacherService {
     private final TeacherRepository teacherRepository;
     private final SchoolRepository schoolRepository;
     private final TeacherMapper teacherMapper;
-//    private final StudentService studentService;
+    private final StudentMapper studentMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -95,18 +97,14 @@ public class TeacherServiceImpl implements TeacherService {
         teacherRepository.deleteTeacherStudentRelation(teacherId, studentId);
     }
 
-    @Override
-    public List<TeacherResponse> getTeachersByStudentId(Long studentId) {
-        List<Teacher> teachers = teacherRepository.findAllByStudentsId(studentId);
-        return teacherMapper.toResponseList(teachers);
-    }
 
-//    @Override
-//    @Transactional(readOnly = true)
-//    public List<StudentResponse> getStudentsOfTeacher(Long teacherId) {
-//        if (!teacherRepository.existsById(teacherId)) {
-//            throw new ResourceNotFoundException("Teacher", "id", teacherId);
-//        }
-//        // return studentService.getStudentsByTeacherId(teacherId);
-//    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentResponse> getStudentsOfTeacher(Long teacherId) {
+        if (!teacherRepository.existsById(teacherId)) {
+            throw new ResourceNotFoundException("Teacher", "id", teacherId);
+        }
+
+        return studentMapper.toResponseList(teacherRepository.findStudentsByTeacherId(teacherId));
+    }
 }

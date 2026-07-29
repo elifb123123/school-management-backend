@@ -33,7 +33,7 @@ public class Student {
 
 
     @ManyToOne
-    @JoinColumn(name = "school_id", referencedColumnName = "schoolId")
+    @JoinColumn(name = "school_id", referencedColumnName = "id")
     private School school;
 
     @ManyToMany(mappedBy = "students")

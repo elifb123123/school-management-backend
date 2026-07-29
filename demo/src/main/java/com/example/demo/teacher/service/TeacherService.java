@@ -1,5 +1,6 @@
 package com.example.demo.teacher.service;
 
+import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import org.springframework.stereotype.Service;
@@ -33,8 +34,6 @@ public interface TeacherService {
 
     void unlinkStudent(Long teacherId, Long studentId);
 
-    List<TeacherResponse> getTeachersByStudentId(Long studentId);
-
-//    List<StudentResponse> getStudentsOfTeacher(Long teacherId);
+    List<StudentResponse> getStudentsOfTeacher(Long teacherId);
 
 }
