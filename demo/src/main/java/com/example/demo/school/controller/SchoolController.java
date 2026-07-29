@@ -3,6 +3,7 @@ package com.example.demo.school.controller;
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.school.service.SchoolService;
+import com.example.demo.student.dto.StudentResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -52,5 +53,10 @@ public class SchoolController {
     public ResponseEntity<SchoolResponse> updateSchool(@PathVariable Long schoolId, @RequestBody @Valid SchoolRequest schoolRequest) {
         SchoolResponse updated = schoolService.updateSchool(schoolId, schoolRequest);
         return ResponseEntity.ok().body(updated);
+    }
+
+    @GetMapping("/{schoolId}/students")
+    public List<StudentResponse> getStudentsBySchoolId(@PathVariable Long schoolId) {
+        return schoolService.getStudentsById(schoolId);
     }
 }

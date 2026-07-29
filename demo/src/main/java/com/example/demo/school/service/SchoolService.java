@@ -2,6 +2,7 @@ package com.example.demo.school.service;
 
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
+import com.example.demo.student.dto.StudentResponse;
 
 import java.util.List;
 
@@ -19,5 +20,6 @@ public interface SchoolService {
 
     SchoolResponse updateSchool(Long schoolId, SchoolRequest schoolRequest);
 
+    List<StudentResponse> getStudentsById(Long studentId);
 
 }

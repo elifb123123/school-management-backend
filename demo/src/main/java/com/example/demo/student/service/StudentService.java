@@ -2,6 +2,7 @@ package com.example.demo.student.service;
 
 import com.example.demo.student.dto.StudentRequest;
 import com.example.demo.student.dto.StudentResponse;
+import com.example.demo.teacher.dto.TeacherResponse;
 
 import java.util.List;
 
@@ -16,4 +17,11 @@ public interface StudentService {
     StudentResponse updateStudent(Long studentId, StudentRequest studentRequest);
 
     StudentResponse searchStudent(Long studentId);
+
+    void addTeacherToStudent(Long studentId, Long teacherId);
+
+    void deleteTeacherFromStudent(Long studentId, Long teacherId);
+
+    List<TeacherResponse> getTeachersOfStudent(Long studentId);
+
 }

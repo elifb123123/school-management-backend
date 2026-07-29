@@ -3,6 +3,8 @@ package com.example.demo.teacher.service;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
+import com.example.demo.student.dto.StudentResponse;
+import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
@@ -22,6 +24,7 @@ public class TeacherServiceImpl implements TeacherService {
     private final TeacherRepository teacherRepository;
     private final SchoolRepository schoolRepository;
     private final TeacherMapper teacherMapper;
+    private final StudentMapper studentMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -72,5 +75,36 @@ public class TeacherServiceImpl implements TeacherService {
             throw new ResourceNotFoundException("Teacher ", "id", id);
         }
         teacherRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return teacherRepository.existsById(id);
+    }
+
+    @Override
+    public boolean existsRelation(Long teacherId, Long studentId) {
+        return teacherRepository.existsTeacherStudentRelation(teacherId, studentId);
+    }
+
+    @Override
+    public void linkStudent(Long teacherId, Long studentId) {
+        teacherRepository.insertTeacherStudentRelation(teacherId, studentId);
+    }
+
+    @Override
+    public void unlinkStudent(Long teacherId, Long studentId) {
+        teacherRepository.deleteTeacherStudentRelation(teacherId, studentId);
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentResponse> getStudentsOfTeacher(Long teacherId) {
+        if (!teacherRepository.existsById(teacherId)) {
+            throw new ResourceNotFoundException("Teacher", "id", teacherId);
+        }
+
+        return studentMapper.toResponseList(teacherRepository.findStudentsByTeacherId(teacherId));
     }
 }

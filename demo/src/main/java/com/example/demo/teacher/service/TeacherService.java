@@ -1,5 +1,6 @@
 package com.example.demo.teacher.service;
 
+import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import org.springframework.stereotype.Service;
@@ -24,4 +25,15 @@ public interface TeacherService {
 
     // ID'ye göre öğretmen sil
     void deleteTeacher(Long id);
+
+    boolean existsById(Long id);
+
+    boolean existsRelation(Long teacherId, Long studentId);
+
+    void linkStudent(Long teacherId, Long studentId);
+
+    void unlinkStudent(Long teacherId, Long studentId);
+
+    List<StudentResponse> getStudentsOfTeacher(Long teacherId);
+
 }
