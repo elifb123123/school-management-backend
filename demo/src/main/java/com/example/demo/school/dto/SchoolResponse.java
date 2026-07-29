@@ -1,6 +1,6 @@
 package com.example.demo.school.dto;
 
 public record SchoolResponse(
-        Long schoolId,
+        Long id,
         String schoolName) {
 }
