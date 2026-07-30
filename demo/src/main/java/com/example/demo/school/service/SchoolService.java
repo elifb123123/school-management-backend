@@ -3,6 +3,7 @@ package com.example.demo.school.service;
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.student.dto.StudentResponse;
+import com.example.demo.teacher.dto.TeacherResponse;
 
 import java.util.List;
 
@@ -21,5 +22,7 @@ public interface SchoolService {
     SchoolResponse updateSchool(Long schoolId, SchoolRequest schoolRequest);
 
     List<StudentResponse> getStudentsById(Long studentId);
+
+    List<TeacherResponse> getTeachersBySchoolId(Long schoolId);
 
 }

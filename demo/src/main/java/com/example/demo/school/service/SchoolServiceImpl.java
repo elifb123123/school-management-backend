@@ -9,6 +9,8 @@ import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.mapper.StudentMapper;
+import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.teacher.mapper.TeacherMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,12 +27,14 @@ public class SchoolServiceImpl implements SchoolService {
     // 2. DTO <-> Entity dönüşümleri için
     private final SchoolMapper schoolMapper;
     private final StudentMapper studentMapper;
+    private final TeacherMapper teacherMapper;
 
     @Autowired
-    public SchoolServiceImpl(SchoolRepository schoolRepository, SchoolMapper schoolMapper, StudentMapper studentMapper) {
+    public SchoolServiceImpl(SchoolRepository schoolRepository, SchoolMapper schoolMapper, StudentMapper studentMapper, TeacherMapper teacherMapper) {
         this.schoolRepository = schoolRepository;
         this.schoolMapper = schoolMapper;
         this.studentMapper = studentMapper;
+        this.teacherMapper = teacherMapper;
     }
 
     @Override
@@ -80,8 +84,20 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
     public List<StudentResponse> getStudentsById(Long schoolId) {
-        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
-        return studentMapper.toResponseList(school.getStudents());
+        if (!schoolRepository.existsById(schoolId)) {
+            throw new ResourceNotFoundException("School ", "id", schoolId);
+        }
+
+        return studentMapper.toResponseList(schoolRepository.findStudentsById(schoolId));
+    }
+
+    public List<TeacherResponse> getTeachersBySchoolId(Long schoolId) {
+
+        if (!schoolRepository.existsById(schoolId)) {
+            throw new ResourceNotFoundException("School ", "id", schoolId);
+        }
+
+        return teacherMapper.toResponseList(schoolRepository.findTeachersById(schoolId));
     }
 
 }

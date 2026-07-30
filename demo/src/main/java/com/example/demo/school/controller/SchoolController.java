@@ -4,6 +4,7 @@ import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.school.service.SchoolService;
 import com.example.demo.student.dto.StudentResponse;
+import com.example.demo.teacher.dto.TeacherResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -58,5 +59,10 @@ public class SchoolController {
     @GetMapping("/{schoolId}/students")
     public List<StudentResponse> getStudentsBySchoolId(@PathVariable Long schoolId) {
         return schoolService.getStudentsById(schoolId);
+    }
+
+    @GetMapping("/{schoolId}/teachers")
+    public List<TeacherResponse> getTeachersBySchoolId(@PathVariable Long schoolId) {
+        return schoolService.getTeachersBySchoolId(schoolId);
     }
 }
