@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface SchoolService {
 
-    List<SchoolResponse> getSchools(Pageable pageable);
+    List<SchoolResponse> getSchools(String name, Pageable pageable);
 
     SchoolResponse getSchoolById(Long schoolId);
 

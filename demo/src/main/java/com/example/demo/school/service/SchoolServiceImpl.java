@@ -7,12 +7,14 @@ import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.school.mapper.SchoolMapper;
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
+import com.example.demo.school.persistence.specification.SchoolSpecification;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,8 +41,9 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
     @Override
-    public List<SchoolResponse> getSchools(Pageable pageable) {
-        List<School> schoolList = schoolRepository.findAll(pageable).getContent();
+    public List<SchoolResponse> getSchools(String name, Pageable pageable) {
+        Specification<School> spec = Specification.where(SchoolSpecification.byName(name));
+        List<School> schoolList = schoolRepository.findAll(spec, pageable).getContent();
         return schoolMapper.toResponseList(schoolList);
     }
 

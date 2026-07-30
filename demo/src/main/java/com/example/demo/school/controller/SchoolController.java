@@ -30,13 +30,14 @@ public class SchoolController {
     public List<SchoolResponse> getSchools(@RequestParam(required = false, defaultValue = "10") int pageSize,
                                            @RequestParam(required = false, defaultValue = "1") int pageNumber,
                                            @RequestParam(required = false, defaultValue = "id") String sortBy,
-                                           @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
+                                           @RequestParam(required = false, defaultValue = "ASC") String sortDir,
+                                           @RequestParam(required = false) String name) {
         Sort sort = Sort.by(sortBy);
         if ("DESC".equalsIgnoreCase(sortDir)) {
             sort = sort.descending();
         }
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
-        return schoolService.getSchools(pageable);
+        return schoolService.getSchools(name, pageable);
     }
 
     @GetMapping(path = "/{schoolId}")
