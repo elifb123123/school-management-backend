@@ -11,6 +11,7 @@ import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +29,8 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TeacherResponse> getTeachers() {
-        List<Teacher> teachers = teacherRepository.findAll();
+    public List<TeacherResponse> getTeachers(Pageable pageable) {
+        List<Teacher> teachers = teacherRepository.findAll(pageable).getContent();
         return teacherMapper.toResponseList(teachers);
     }
 

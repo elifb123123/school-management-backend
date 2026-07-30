@@ -12,6 +12,7 @@ import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +39,8 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
     @Override
-    public List<SchoolResponse> getSchools() {
-        List<School> schoolList = schoolRepository.findAll();
+    public List<SchoolResponse> getSchools(Pageable pageable) {
+        List<School> schoolList = schoolRepository.findAll(pageable).getContent();
         return schoolMapper.toResponseList(schoolList);
     }
 
@@ -83,21 +84,21 @@ public class SchoolServiceImpl implements SchoolService {
         return schoolMapper.toResponse(updatedSchool);
     }
 
-    public List<StudentResponse> getStudentsById(Long schoolId) {
+    public List<StudentResponse> getStudentsById(Long schoolId, Pageable pageable) {
         if (!schoolRepository.existsById(schoolId)) {
             throw new ResourceNotFoundException("School ", "id", schoolId);
         }
 
-        return studentMapper.toResponseList(schoolRepository.findStudentsById(schoolId));
+        return studentMapper.toResponseList(schoolRepository.findStudentsById(schoolId, pageable).getContent());
     }
 
-    public List<TeacherResponse> getTeachersBySchoolId(Long schoolId) {
+    public List<TeacherResponse> getTeachersBySchoolId(Long schoolId, Pageable pageable) {
 
         if (!schoolRepository.existsById(schoolId)) {
             throw new ResourceNotFoundException("School ", "id", schoolId);
         }
 
-        return teacherMapper.toResponseList(schoolRepository.findTeachersById(schoolId));
+        return teacherMapper.toResponseList(schoolRepository.findTeachersById(schoolId, pageable).getContent());
     }
 
 }

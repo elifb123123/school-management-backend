@@ -4,12 +4,13 @@ import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherResponse;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface SchoolService {
 
-    List<SchoolResponse> getSchools();
+    List<SchoolResponse> getSchools(Pageable pageable);
 
     SchoolResponse getSchoolById(Long schoolId);
 
@@ -21,8 +22,8 @@ public interface SchoolService {
 
     SchoolResponse updateSchool(Long schoolId, SchoolRequest schoolRequest);
 
-    List<StudentResponse> getStudentsById(Long studentId);
+    List<StudentResponse> getStudentsById(Long schoolId, Pageable pageable);
 
-    List<TeacherResponse> getTeachersBySchoolId(Long schoolId);
+    List<TeacherResponse> getTeachersBySchoolId(Long schoolId, Pageable pageable);
 
 }

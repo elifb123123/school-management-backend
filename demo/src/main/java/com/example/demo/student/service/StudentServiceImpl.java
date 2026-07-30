@@ -13,6 +13,7 @@ import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +42,8 @@ public class StudentServiceImpl implements StudentService {
         this.teacherMapper = teacherMapper;
     }
 
-    public List<StudentResponse> getStudents() {
-        return studentMapper.toResponseList(studentRepository.findAll());
+    public List<StudentResponse> getStudents(Pageable pageable) {
+        return studentMapper.toResponseList(studentRepository.findAll(pageable).getContent());
     }
 
     public StudentResponse addNewStudent(StudentRequest studentRequest) {
