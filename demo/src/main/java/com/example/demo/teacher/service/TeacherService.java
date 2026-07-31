@@ -3,6 +3,7 @@ package com.example.demo.teacher.service;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
 public interface TeacherService {
 
     // Tüm öğretmenleri listele (Zaten var)
-    List<TeacherResponse> getTeachers();
+    List<TeacherResponse> getTeachers(String name,Pageable pageable);
 
     // ID'ye göre tek bir öğretmen getir
     TeacherResponse getTeacherById(Long id);

@@ -9,13 +9,17 @@ import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.mapper.StudentMapper;
 import com.example.demo.student.persistence.Student;
 import com.example.demo.student.persistence.StudentRepository;
+import com.example.demo.student.persistence.specification.StudentSpecification;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -41,8 +45,10 @@ public class StudentServiceImpl implements StudentService {
         this.teacherMapper = teacherMapper;
     }
 
-    public List<StudentResponse> getStudents() {
-        return studentMapper.toResponseList(studentRepository.findAll());
+    public List<StudentResponse> getStudents(String name, String email, LocalDate birthDate, Pageable pageable) {
+        Specification<Student> spec = Specification.where(StudentSpecification.byName(name))
+                .or(StudentSpecification.byBirthDate(birthDate)).or(StudentSpecification.byEmail(email));
+        return studentMapper.toResponseList(studentRepository.findAll(spec, pageable).getContent());
     }
 
     public StudentResponse addNewStudent(StudentRequest studentRequest) {
