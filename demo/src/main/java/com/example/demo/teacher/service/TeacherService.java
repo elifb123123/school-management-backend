@@ -3,16 +3,16 @@ package com.example.demo.teacher.service;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
 public interface TeacherService {
 
-    // Tüm öğretmenleri listele (Zaten var)
-    List<TeacherResponse> getTeachers(String name,Pageable pageable);
+
+    // Tüm öğretmenleri listele
+    Page<TeacherResponse> getTeachers(String name, Pageable pageable);
 
     // ID'ye göre tek bir öğretmen getir
     TeacherResponse getTeacherById(Long id);
@@ -31,10 +31,13 @@ public interface TeacherService {
 
     boolean existsRelation(Long teacherId, Long studentId);
 
+    // Öğretmenle öğrenciyi ilişkilendir
     void linkStudent(Long teacherId, Long studentId);
 
+    // Öğretmenle öğrenci ilişkisini kaldır
     void unlinkStudent(Long teacherId, Long studentId);
 
+    //Belirli bir öğretmene ait öğrencileri getir
     List<StudentResponse> getStudentsOfTeacher(Long teacherId);
 
 }
