@@ -12,7 +12,8 @@ public class StudentSpecification {
             if (name == null || name.trim().isEmpty()) {
                 return null;
             } else {
-                return criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                return criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
+                        "%" + name.toLowerCase() + "%");
             }
 
         };
@@ -24,7 +25,7 @@ public class StudentSpecification {
             if (email == null || email.trim().isEmpty()) {
                 return null;
             } else {
-                return criteriaBuilder.like(root.get("email"), "%" + email + "%");
+                return criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), "%" + email.toLowerCase() + "%");
             }
         };
 

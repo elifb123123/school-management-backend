@@ -12,7 +12,7 @@ import java.util.List;
 public interface TeacherService {
 
     // Tüm öğretmenleri listele (Zaten var)
-    List<TeacherResponse> getTeachers(Pageable pageable);
+    List<TeacherResponse> getTeachers(String name,Pageable pageable);
 
     // ID'ye göre tek bir öğretmen getir
     TeacherResponse getTeacherById(Long id);

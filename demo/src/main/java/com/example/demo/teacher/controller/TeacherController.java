@@ -31,7 +31,8 @@ public class TeacherController {
     public List<TeacherResponse> getTeachers(@RequestParam(required = false, defaultValue = "10") int pageSize,
                                              @RequestParam(required = false, defaultValue = "1") int pageNumber,
                                              @RequestParam(required = false, defaultValue = "id") String sortBy,
-                                             @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
+                                             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
+                                             @RequestParam(required = false) String name) {
 
         Sort sort = Sort.by(sortBy);
         if ("DESC".equalsIgnoreCase(sortDir)) {
@@ -39,7 +40,7 @@ public class TeacherController {
         }
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
 
-        return teacherService.getTeachers(pageable);
+        return teacherService.getTeachers(name, pageable);
     }
 
     // GET /api/teachers/{id}
