@@ -5,11 +5,12 @@ import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface StudentService {
 
-    List<StudentResponse> getStudents(Pageable pageable);
+    List<StudentResponse> getStudents(String name, String email, LocalDate birthDate, Pageable pageable);
 
     StudentResponse addNewStudent(StudentRequest studentRequest);
 
