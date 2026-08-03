@@ -4,9 +4,7 @@ package com.example.demo.student.persistence;
 import com.example.demo.school.persistence.School;
 import com.example.demo.teacher.persistence.Teacher;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -18,19 +16,24 @@ import java.util.Set;
 @Setter
 @Getter
 @ToString
+@AllArgsConstructor
+@NoArgsConstructor
 public class Student {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(nullable = false)
     private String name;
+
     @Column(nullable = false, unique = true)
     private String email;
-    private LocalDate dateOfBirth;
-    @Transient
-    private Integer age;
 
+    private LocalDate dateOfBirth;
+
+    @Transient // todo: araştır..
+    private Integer age;
 
     @ManyToOne
     @JoinColumn(name = "school_id", referencedColumnName = "id")
@@ -39,26 +42,14 @@ public class Student {
     @ManyToMany(mappedBy = "students")
     private Set<Teacher> teachers;
 
-
-    public Student() {
-    }
-
-    public Student(Long id, String name, String email, LocalDate dateOfBirth) {
-        this.id = id;
-        this.name = name;
-        this.dateOfBirth = dateOfBirth;
-    }
-
     public Student(String name, String email, LocalDate dateOfBirth) {
         this.name = name;
         this.email = email;
         this.dateOfBirth = dateOfBirth;
     }
 
-
     public Integer getAge() {
         return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
-
 
 }
