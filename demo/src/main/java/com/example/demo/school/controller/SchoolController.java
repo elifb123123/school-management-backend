@@ -7,13 +7,10 @@ import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(path = "api/school")
@@ -26,17 +23,11 @@ public class SchoolController {
         this.schoolService = schoolService;
     }
 
+    //GET /api/schools?page=0&size=10&sort=schoolName,asc
     @GetMapping
-    public List<SchoolResponse> getSchools(@RequestParam(required = false, defaultValue = "10") int pageSize,
-                                           @RequestParam(required = false, defaultValue = "1") int pageNumber,
-                                           @RequestParam(required = false, defaultValue = "id") String sortBy,
-                                           @RequestParam(required = false, defaultValue = "ASC") String sortDir,
+    public Page<SchoolResponse> getSchools(Pageable pageable,
                                            @RequestParam(required = false) String name) {
-        Sort sort = Sort.by(sortBy);
-        if ("DESC".equalsIgnoreCase(sortDir)) {
-            sort = sort.descending();
-        }
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
+
         return schoolService.getSchools(name, pageable);
     }
 
@@ -45,10 +36,6 @@ public class SchoolController {
         return schoolService.getSchoolById(schoolId);
     }
 
-    @GetMapping("/search")
-    public SchoolResponse getSchoolByName(@RequestParam String name) {
-        return schoolService.getSchoolByName(name);
-    }
 
     @PostMapping
     public ResponseEntity<Void> registerNewSchool(@RequestBody @Valid SchoolRequest schoolRequest) {
@@ -68,31 +55,18 @@ public class SchoolController {
         return ResponseEntity.ok().body(updated);
     }
 
+    //GET /api/schools/{schoolId}/students?page=0&size=10&sort=schoolName,asc
     @GetMapping("/{schoolId}/students")
-    public List<StudentResponse> getStudentsBySchoolId(@PathVariable Long schoolId,
-                                                       @RequestParam(required = false, defaultValue = "10") int pageSize,
-                                                       @RequestParam(required = false, defaultValue = "1") int pageNumber,
-                                                       @RequestParam(required = false, defaultValue = "id") String sortBy,
-                                                       @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
-        Sort sort = Sort.by(sortBy);
-        if ("DESC".equalsIgnoreCase(sortDir)) {
-            sort = sort.descending();
-        }
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
+    public Page<StudentResponse> getStudentsBySchoolId(@PathVariable Long schoolId, Pageable pageable) {
+
         return schoolService.getStudentsById(schoolId, pageable);
     }
 
+    //GET /api/schools/{schoolId}/teachers?page=0&size=10&sort=schoolName,asc
     @GetMapping("/{schoolId}/teachers")
-    public List<TeacherResponse> getTeachersBySchoolId(@PathVariable Long schoolId,
-                                                       @RequestParam(required = false, defaultValue = "10") int pageSize,
-                                                       @RequestParam(required = false, defaultValue = "1") int pageNumber,
-                                                       @RequestParam(required = false, defaultValue = "id") String sortBy,
-                                                       @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
-        Sort sort = Sort.by(sortBy);
-        if ("DESC".equalsIgnoreCase(sortDir)) {
-            sort = sort.descending();
-        }
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
+    public Page<TeacherResponse> getTeachersBySchoolId(@PathVariable Long schoolId,
+                                                       Pageable pageable) {
+
         return schoolService.getTeachersBySchoolId(schoolId, pageable);
     }
 }
