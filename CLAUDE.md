@@ -23,7 +23,8 @@ service/controller/repository test coverage exists yet.
 
 ## Database configuration
 
-`src/main/resources/application.properties` points at Postgres — **the schema is dropped and recreated on every
+`src/main/resources/application.properties` points at Postgres with `spring.jpa.hibernate.ddl-auto=create` — **the
+schema is dropped and recreated on every
 application start**, and a running Postgres instance on localhost is required. H2 and `spring-boot-h2console` are on the
 classpath (runtime scope) but Postgres is the active `spring.datasource.url`, so switch that property if you want to run
 against H2 instead.
