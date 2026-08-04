@@ -50,7 +50,7 @@ public class StudentServiceImpl implements StudentService {
 
     public Page<StudentResponse> getStudents(String name, String email, LocalDate birthDate, Pageable pageable) {
         Specification<Student> spec = Specification.where(StudentSpecification.byName(name))
-                .or(StudentSpecification.byBirthDate(birthDate)).or(StudentSpecification.byEmail(email));
+                .and(StudentSpecification.byBirthDate(birthDate)).and(StudentSpecification.byEmail(email));
         Page<Student> studentPage = studentRepository.findAll(spec, pageable);
         log.info("Students retrieved successfully");
         return studentPage.map(studentMapper::toResponse);
@@ -62,7 +62,7 @@ public class StudentServiceImpl implements StudentService {
         }
 
         Student student = studentMapper.toEntity(studentRequest);
-        student.setSchool(resolveSchool(studentRequest.schoolName()));
+        student.setSchool(resolveSchool(studentRequest.schoolId()));
 
         Student saved = studentRepository.save(student);
         log.info("Saved student successfully");
@@ -84,7 +84,7 @@ public class StudentServiceImpl implements StudentService {
 
         student.setName(studentRequest.name());
         student.setDateOfBirth(studentRequest.dateOfBirth());
-        student.setSchool(resolveSchool(studentRequest.schoolName()));
+        student.setSchool(resolveSchool(studentRequest.schoolId()));
         log.info("Updated student successfully");
         // no explicit save() needed — @Transactional + managed entity triggers dirty checking on commit
         return studentMapper.toResponse(student);
@@ -97,12 +97,12 @@ public class StudentServiceImpl implements StudentService {
         return studentMapper.toResponse(student);
     }
 
-    private School resolveSchool(String schoolName) {
-        return schoolRepository.findSchoolBySchoolName(schoolName)
-                .orElseThrow(() -> new ResourceNotFoundException("School ", "school name", schoolName));
+    private School resolveSchool(Long schoolId) {
+        return schoolRepository.findById(schoolId)
+                .orElseThrow(() -> new ResourceNotFoundException("School ", "school id", schoolId));
     }
 
-    public void addTeacherToStudent(Long studentId, Long teacherId) {
+    public void linkTeacherToStudent(Long studentId, Long teacherId) {
         if (!studentRepository.existsById(studentId)) {
             throw new ResourceNotFoundException("Student", "id", studentId);
         }
@@ -117,7 +117,7 @@ public class StudentServiceImpl implements StudentService {
         log.info("Teacher {} and student{} linked by student ", teacherId, studentId);
     }
 
-    public void deleteTeacherFromStudent(Long studentId, Long teacherId) {
+    public void unlinkTeacherFromStudent(Long studentId, Long teacherId) {
         if (!studentRepository.existsById(studentId)) {
             throw new ResourceNotFoundException("Student", "id", studentId);
         }

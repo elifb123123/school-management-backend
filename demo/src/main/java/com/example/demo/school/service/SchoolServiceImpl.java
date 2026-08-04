@@ -59,9 +59,10 @@ public class SchoolServiceImpl implements SchoolService {
 
 
     @Override
-    public void addNewSchool(SchoolRequest schoolRequest) {
-        schoolRepository.save(schoolMapper.toEntity(schoolRequest));
+    public SchoolResponse addNewSchool(SchoolRequest schoolRequest) {
+        School saved = schoolRepository.save(schoolMapper.toEntity(schoolRequest));
         log.info("Added new school: {}", schoolRequest.schoolName());
+        return schoolMapper.toResponse(saved);
     }
 
     @Override

@@ -21,9 +21,9 @@ public interface StudentService {
 
     StudentResponse searchStudent(Long studentId);
 
-    void addTeacherToStudent(Long studentId, Long teacherId);
+    void linkTeacherToStudent(Long studentId, Long teacherId);
 
-    void deleteTeacherFromStudent(Long studentId, Long teacherId);
+    void unlinkTeacherFromStudent(Long studentId, Long teacherId);
 
     List<TeacherResponse> getTeachersOfStudent(Long studentId);
 

@@ -19,7 +19,7 @@ public interface TeacherService {
 
     // Yeni öğretmen kaydet
 
-    TeacherResponse createTeacher(TeacherRequest teacherRequest, Long schoolId);
+    TeacherResponse createTeacher(TeacherRequest teacherRequest);
 
     // Var olan öğretmeni güncelle
     TeacherResponse updateTeacher(TeacherRequest teacherRequest, Long TeacherId);

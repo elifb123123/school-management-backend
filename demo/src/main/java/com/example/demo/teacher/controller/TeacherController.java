@@ -42,11 +42,11 @@ public class TeacherController {
         return ResponseEntity.ok(teacher);
     }
 
-    // POST /api/{schoolID}/teachers
-    @PostMapping("/{schoolId}/teachers")
-    public ResponseEntity<TeacherResponse> createTeacher(@PathVariable Long schoolId, @RequestBody @Valid TeacherRequest teacherRequest) {
+    // POST /api/teacher
+    @PostMapping
+    public ResponseEntity<TeacherResponse> createTeacher(@RequestBody @Valid TeacherRequest teacherRequest) {
         //Don't want orphan teachers
-        TeacherResponse created = teacherService.createTeacher(teacherRequest, schoolId);
+        TeacherResponse created = teacherService.createTeacher(teacherRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -77,7 +77,7 @@ public class TeacherController {
             @PathVariable Long studentId) {
 
         teacherService.linkStudent(teacherId, studentId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.noContent().build();
     }
 
     // DELETE /api/teachers/1/students/5 -> Öğretmenden öğrenciyi koparır

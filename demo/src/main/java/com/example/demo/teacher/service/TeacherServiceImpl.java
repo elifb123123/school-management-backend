@@ -57,7 +57,8 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public TeacherResponse createTeacher(TeacherRequest teacherRequest, Long schoolId) {
+    public TeacherResponse createTeacher(TeacherRequest teacherRequest) {
+        Long schoolId = teacherRequest.schoolId();
         School school = schoolRepository.findById(schoolId)
                 .orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
 
