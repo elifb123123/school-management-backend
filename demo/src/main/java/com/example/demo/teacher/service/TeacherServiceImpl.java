@@ -1,10 +1,12 @@
 package com.example.demo.teacher.service;
 
+import com.example.demo.exception.ResourceAlreadyExistsException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.mapper.StudentMapper;
+import com.example.demo.student.persistence.Student;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
@@ -12,13 +14,17 @@ import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import com.example.demo.teacher.persistence.specification.TeacherSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,12 +35,16 @@ public class TeacherServiceImpl implements TeacherService {
     private final TeacherMapper teacherMapper;
     private final StudentMapper studentMapper;
 
+    // todo: LOGGING....
+
     @Override
     @Transactional(readOnly = true)
-    public List<TeacherResponse> getTeachers(String name, Pageable pageable) {
+    public Page<TeacherResponse> getTeachers(String name, Pageable pageable) {
         Specification<Teacher> spec = Specification.where(TeacherSpecification.byName(name));
-        List<Teacher> teachers = teacherRepository.findAll(spec, pageable).getContent();
-        return teacherMapper.toResponseList(teachers);
+        Page<Teacher> teachers = teacherRepository.findAll(spec, pageable);
+        log.info("Teachers retrieved: {}", teachers.getContent());
+        return teachers.map(teacherMapper::toResponse);
+
     }
 
     @Override
@@ -42,6 +52,7 @@ public class TeacherServiceImpl implements TeacherService {
     public TeacherResponse getTeacherById(Long id) {
         Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher ", "id", id));
+        log.info("Successfully fetched teacher by ID: {}", id);
         return teacherMapper.toResponse(teacher);
     }
 
@@ -54,6 +65,7 @@ public class TeacherServiceImpl implements TeacherService {
         teacher.setSchool(school);
 
         Teacher saved = teacherRepository.save(teacher);
+        log.info("Created teacher: {}", saved.getName());
         return teacherMapper.toResponse(saved);
     }
 
@@ -64,12 +76,13 @@ public class TeacherServiceImpl implements TeacherService {
 
         teacher.setName(teacherRequest.name());
 
-        // schoolName in the request may have changed; resolve and reassign the School
-        School school = schoolRepository.findSchoolBySchoolName(teacherRequest.schoolName())
-                .orElseThrow(() -> new ResourceNotFoundException("School ", "school name", teacherRequest.schoolName()));
+        // schoolId in the request may have changed; resolve and reassign the School
+        School school = schoolRepository.findById(teacherRequest.schoolId())
+                .orElseThrow(() -> new ResourceNotFoundException("School ", "school ID", teacherRequest.schoolId()));
         teacher.setSchool(school);
 
         Teacher updated = teacherRepository.save(teacher);
+        log.info("Updated teacher: {}", updated.getName());
         return teacherMapper.toResponse(updated);
     }
 
@@ -79,6 +92,7 @@ public class TeacherServiceImpl implements TeacherService {
             throw new ResourceNotFoundException("Teacher ", "id", id);
         }
         teacherRepository.deleteById(id);
+        log.info("Deleted teacher with ID: {}", id);
     }
 
     @Override
@@ -93,22 +107,36 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     public void linkStudent(Long teacherId, Long studentId) {
-        teacherRepository.insertTeacherStudentRelation(teacherId, studentId);
+        if (!teacherRepository.existsById(teacherId)) {
+            throw new ResourceNotFoundException("Teacher", "id", teacherId);
+        }
+        if (teacherRepository.existsTeacherStudentRelation(teacherId, studentId)) {
+            throw new ResourceAlreadyExistsException("Student-Teacher relation", "studentId-teacherId", studentId + "-" + teacherId);
+        } else teacherRepository.insertTeacherStudentRelation(teacherId, studentId);
+        log.info("Linked student{} and teacher {}", studentId, teacherId);
     }
 
+    // todo: parametrelerin if checkleri yapılmalı ...
     @Override
     public void unlinkStudent(Long teacherId, Long studentId) {
-        teacherRepository.deleteTeacherStudentRelation(teacherId, studentId);
+        if (!teacherRepository.existsById(teacherId)) {
+            throw new ResourceNotFoundException("Teacher", "id", teacherId);
+        }
+        if (!teacherRepository.existsTeacherStudentRelation(teacherId, studentId)) {
+            throw new ResourceNotFoundException("Student-Teacher relation", "studentId-teacherId", studentId + "-" + teacherId);
+        } else teacherRepository.deleteTeacherStudentRelation(teacherId, studentId);
+        log.info("Unlinked student{} and teacher {}", studentId, teacherId);
     }
 
 
     @Override
     @Transactional(readOnly = true)
     public List<StudentResponse> getStudentsOfTeacher(Long teacherId) {
-        if (!teacherRepository.existsById(teacherId)) {
+        if (Objects.nonNull(teacherId) && !teacherRepository.existsById(teacherId)) {
             throw new ResourceNotFoundException("Teacher", "id", teacherId);
         }
-
-        return studentMapper.toResponseList(teacherRepository.findStudentsByTeacherId(teacherId));
+        List<Student> studentList = teacherRepository.findStudentsByTeacherId(teacherId);
+        log.info("Fetched students for teacher with ID: {}", teacherId);
+        return studentMapper.toResponseList(studentList);
     }
 }

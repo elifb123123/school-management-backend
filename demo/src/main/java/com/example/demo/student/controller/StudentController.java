@@ -6,9 +6,8 @@ import com.example.demo.student.service.StudentService;
 import com.example.demo.teacher.dto.TeacherResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,18 +28,11 @@ public class StudentController {
 
 
     @GetMapping
-    public List<StudentResponse> getStudents(@RequestParam(required = false, defaultValue = "10") int pageSize,
-                                             @RequestParam(required = false, defaultValue = "1") int pageNumber,
-                                             @RequestParam(required = false, defaultValue = "id") String sortBy,
-                                             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
+    public Page<StudentResponse> getStudents(Pageable pageable,
                                              @RequestParam(required = false) String name,
                                              @RequestParam(required = false) String email,
                                              @RequestParam(required = false) LocalDate birthDate) {
-        Sort sort = Sort.by(sortBy);
-        if ("DESC".equalsIgnoreCase(sortDir)) {
-            sort = sort.descending();
-        }
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
+
         return studentService.getStudents(name, email, birthDate, pageable);
     }
 

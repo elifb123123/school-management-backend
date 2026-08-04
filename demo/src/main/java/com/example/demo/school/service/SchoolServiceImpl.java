@@ -1,6 +1,5 @@
 package com.example.demo.school.service;
 
-import com.example.demo.exception.ResourceAlreadyExistsException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
@@ -10,9 +9,13 @@ import com.example.demo.school.persistence.SchoolRepository;
 import com.example.demo.school.persistence.specification.SchoolSpecification;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.mapper.StudentMapper;
+import com.example.demo.student.persistence.Student;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
+import com.example.demo.teacher.persistence.Teacher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -20,8 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-
+@Slf4j
 @Service
 @Transactional
 public class SchoolServiceImpl implements SchoolService {
@@ -41,34 +43,29 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
     @Override
-    public List<SchoolResponse> getSchools(String name, Pageable pageable) {
+    public Page<SchoolResponse> getSchools(String name, Pageable pageable) {
         Specification<School> spec = Specification.where(SchoolSpecification.byName(name));
-        List<School> schoolList = schoolRepository.findAll(spec, pageable).getContent();
-        return schoolMapper.toResponseList(schoolList);
+        Page<School> schoolPage = schoolRepository.findAll(spec, pageable);
+        log.info("Retrieved schools page: {}", schoolPage.getNumber());
+        return schoolPage.map(schoolMapper::toResponse);
     }
 
     @Override
     public SchoolResponse getSchoolById(Long schoolId) {
         School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
+        log.info("Retrieved school response: {}", school);
         return schoolMapper.toResponse(school);
     }
 
-    public SchoolResponse getSchoolByName(String schoolName) {
-        School school = schoolRepository.findSchoolBySchoolName(schoolName).orElseThrow(() -> new ResourceNotFoundException("School ", "school name", schoolName));
-        return schoolMapper.toResponse(school);
-    }
 
     @Override
     public void addNewSchool(SchoolRequest schoolRequest) {
-        if (schoolRepository.existsBySchoolName(schoolRequest.schoolName())) {
-            throw new ResourceAlreadyExistsException("School", "school name", schoolRequest.schoolName());
-        }
         schoolRepository.save(schoolMapper.toEntity(schoolRequest));
+        log.info("Added new school: {}", schoolRequest.schoolName());
     }
 
     @Override
     public void deleteSchool(Long schoolId) {
-        System.out.println("Service received id: " + schoolId);
 
         boolean exists = schoolRepository.existsById(schoolId);
 
@@ -76,6 +73,7 @@ public class SchoolServiceImpl implements SchoolService {
             throw new ResourceNotFoundException("School ", "id", schoolId);
         }
         schoolRepository.deleteById(schoolId);
+        log.info("Deleted school: {}", schoolId);
     }
 
     @Override
@@ -84,24 +82,28 @@ public class SchoolServiceImpl implements SchoolService {
         School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
         schoolMapper.updateSchoolFromDto(schoolRequest, school);
         School updatedSchool = schoolRepository.save(school);
+        log.info("Updated school: {}", school);
         return schoolMapper.toResponse(updatedSchool);
     }
 
-    public List<StudentResponse> getStudentsById(Long schoolId, Pageable pageable) {
+    public Page<StudentResponse> getStudentsById(Long schoolId, Pageable pageable) {
         if (!schoolRepository.existsById(schoolId)) {
             throw new ResourceNotFoundException("School ", "id", schoolId);
         }
-
-        return studentMapper.toResponseList(schoolRepository.findStudentsById(schoolId, pageable).getContent());
+        Page<Student> students = schoolRepository.findStudentsById(schoolId, pageable);
+        log.info("Retrieved students for school  {}", schoolId);
+        return students.map(studentMapper::toResponse);
     }
 
-    public List<TeacherResponse> getTeachersBySchoolId(Long schoolId, Pageable pageable) {
+    public Page<TeacherResponse> getTeachersBySchoolId(Long schoolId, Pageable pageable) {
 
         if (!schoolRepository.existsById(schoolId)) {
             throw new ResourceNotFoundException("School ", "id", schoolId);
         }
 
-        return teacherMapper.toResponseList(schoolRepository.findTeachersById(schoolId, pageable).getContent());
+        Page<Teacher> teachers = schoolRepository.findTeachersById(schoolId, pageable);
+        log.info("Retrieved teachers for school  {}", schoolId);
+        return teachers.map(teacherMapper::toResponse);
     }
 
 }
