@@ -49,8 +49,9 @@ public class StudentController {
     }
 
     @DeleteMapping(path = "/{studentId}")
-    public void deleteStudent(@PathVariable Long studentId) {
+    public ResponseEntity<Void> deleteStudent(@PathVariable Long studentId) {
         studentService.deleteStudent(studentId);
+        return ResponseEntity.noContent().build();
     }
 
     // TODO: PathVariable ve RequestParam farkı ???
@@ -66,15 +67,16 @@ public class StudentController {
     // Öğrencinin Öğretmen Kaydını Sil  @DeleteMapping("/{studentId}/teachers/{teacherId}")
     // Öğrencinin Ders Aldığı Öğretmenleri Getir  @GetMapping("/{studentId}/teachers")
 
-    @PostMapping("/{studentId}/teachers/{teacherId}")
-    public ResponseEntity<Void> addTeacherToStudent(@PathVariable Long studentId, @PathVariable Long teacherId) {
-        studentService.addTeacherToStudent(studentId, teacherId);
-        return ResponseEntity.ok().build();
+    @PostMapping("/{studentId}/teachers/{teacherId}/link")
+    public ResponseEntity<Void> linkTeacherToStudent(@PathVariable Long studentId, @PathVariable Long teacherId) {
+        studentService.linkTeacherToStudent(studentId, teacherId);
+        return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{studentId}/teachers/{teacherId}")
-    public void deleteTeacherFromStudent(@PathVariable Long studentId, @PathVariable Long teacherId) {
-        studentService.deleteTeacherFromStudent(studentId, teacherId);
+    @DeleteMapping("/{studentId}/teachers/{teacherId}/unlink")
+    public ResponseEntity<Void> unlinkTeacherFromStudent(@PathVariable Long studentId, @PathVariable Long teacherId) {
+        studentService.unlinkTeacherFromStudent(studentId, teacherId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{studentId}/teachers")

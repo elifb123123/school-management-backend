@@ -16,7 +16,7 @@ public record StudentRequest(
         String email,
         @NotNull(message = "Doğum tarihi girin")
         LocalDate dateOfBirth,
-        @NotBlank(message = "Okul adı girin")
-        String schoolName
+        @NotNull(message = "Okul id girin")
+        Long schoolId
 ) {
 }

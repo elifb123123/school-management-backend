@@ -38,9 +38,9 @@ public class SchoolController {
 
 
     @PostMapping
-    public ResponseEntity<Void> registerNewSchool(@RequestBody @Valid SchoolRequest schoolRequest) {
-        schoolService.addNewSchool(schoolRequest);
-        return ResponseEntity.status(201).build();//201 for created
+    public ResponseEntity<SchoolResponse> registerNewSchool(@RequestBody @Valid SchoolRequest schoolRequest) {
+        SchoolResponse created = schoolService.addNewSchool(schoolRequest);
+        return ResponseEntity.status(201).body(created);//201 for created
     }
 
     @DeleteMapping("/{schoolId}")

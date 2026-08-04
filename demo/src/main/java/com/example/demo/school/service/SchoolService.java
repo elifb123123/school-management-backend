@@ -13,7 +13,7 @@ public interface SchoolService {
 
     SchoolResponse getSchoolById(Long schoolId);
 
-    void addNewSchool(SchoolRequest schoolRequest);
+    SchoolResponse addNewSchool(SchoolRequest schoolRequest);
 
     void deleteSchool(Long schoolId);
 
