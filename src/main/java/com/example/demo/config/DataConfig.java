@@ -25,7 +25,9 @@ public class DataConfig {
         return args -> {
             if (schoolRepository.count() == 0) {
                 School school1 = new School("School 1");
+                school1.setAddress("123 Main St, Springfield");
                 School school2 = new School("School 2");
+                school2.setAddress("456 Oak Ave, Shelbyville");
                 schoolRepository.saveAll(List.of(school1, school2));
             }
 

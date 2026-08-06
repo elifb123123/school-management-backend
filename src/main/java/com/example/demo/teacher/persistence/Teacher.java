@@ -26,6 +26,8 @@ public class Teacher {
 
     private String name;
 
+    private String email;
+
     @ManyToOne
     @JoinColumn(name = "school_id", referencedColumnName = "id")
     private School school;

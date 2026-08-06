@@ -22,8 +22,11 @@ public class School {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String schoolName;
+
+    @Column(nullable = false)
+    private String address;
 
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Student> students;
