@@ -75,7 +75,7 @@ public class TeacherServiceImpl implements TeacherService {
         Teacher teacher = teacherRepository.findById(teacherId)
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher ", "id", teacherId));
 
-        teacher.setName(teacherRequest.name());
+        teacherMapper.updateTeacherFromRequest(teacherRequest, teacher);
 
         // schoolId in the request may have changed; resolve and reassign the School
         School school = schoolRepository.findById(teacherRequest.schoolId())

@@ -42,6 +42,7 @@ public class DataConfig {
             if (teacherRepository.findAll().isEmpty()) {
                 Teacher john = new Teacher();
                 john.setName("John Smith");
+                john.setEmail("jhon@gmail.com");
                 john.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
                 Student ayse = studentRepository.findStudentByName("ayse")
                         .orElseThrow(() -> new RuntimeException("Ayşe bulunamadı!"));
@@ -54,6 +55,7 @@ public class DataConfig {
                 // dolayısıyla ogrencinin ogretmenlerine doğrudan student nesnesi üzerinden erişemeyiz.
                 Teacher maria = new Teacher();
                 maria.setName("Maria Garcia");
+                maria.setEmail("maria@gmail.com");
                 maria.setSchool(schoolRepository.findSchoolBySchoolName("School 2").orElse(null));
 
                 teacherRepository.saveAll(List.of(john, maria));

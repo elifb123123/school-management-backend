@@ -5,6 +5,7 @@ import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.persistence.Teacher;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
@@ -20,5 +21,7 @@ public interface TeacherMapper {
 
     List<TeacherResponse> toResponseList(List<Teacher> teachers);
 
-
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "school", ignore = true)
+    void updateTeacherFromRequest(TeacherRequest teacherRequest, @MappingTarget Teacher teacher);
 }

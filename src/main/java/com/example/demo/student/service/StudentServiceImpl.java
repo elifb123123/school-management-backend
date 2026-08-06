@@ -81,9 +81,7 @@ public class StudentServiceImpl implements StudentService {
     public StudentResponse updateStudent(Long studentId, StudentRequest studentRequest) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "id", studentId));
-
-        student.setName(studentRequest.name());
-        student.setDateOfBirth(studentRequest.dateOfBirth());
+        studentMapper.updateStudentFromRequest(studentRequest, student);
         student.setSchool(resolveSchool(studentRequest.schoolId()));
         log.info("Updated student successfully");
         // no explicit save() needed — @Transactional + managed entity triggers dirty checking on commit

@@ -5,6 +5,7 @@ import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.persistence.Student;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
@@ -18,4 +19,11 @@ public interface StudentMapper {
     StudentResponse toResponse(Student student);
 
     List<StudentResponse> toResponseList(List<Student> students);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "school", ignore = true)
+        // eşleşmeyi id ye göre yap, id değerinde değişiklik yapma ignore et.
+        //school eşleşmesi serviste hallediliyor.
+    void updateStudentFromRequest(StudentRequest studentRequest, @MappingTarget Student student);
+    //@MappingTarget yeni nesne üretmemesi sadece update etmesi için
 }
