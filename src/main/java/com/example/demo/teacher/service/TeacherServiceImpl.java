@@ -10,6 +10,7 @@ import com.example.demo.student.persistence.Student;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
+import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import com.example.demo.teacher.persistence.specification.TeacherSpecification;
@@ -21,6 +22,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -139,5 +141,13 @@ public class TeacherServiceImpl implements TeacherService {
         List<Student> studentList = teacherRepository.findStudentsByTeacherId(teacherId);
         log.info("Fetched students for teacher with ID: {}", teacherId);
         return studentMapper.toResponseList(studentList);
+    }
+
+
+    @Override
+    public List<String> getAllBranches() {
+        return Arrays.stream(Branch.values())
+                .map(Enum::name)
+                .toList();
     }
 }

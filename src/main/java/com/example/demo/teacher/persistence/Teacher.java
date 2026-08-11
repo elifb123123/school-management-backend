@@ -26,7 +26,12 @@ public class Teacher {
 
     private String name;
 
+    @Column(unique = true)
     private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Branch branch;
 
     @ManyToOne
     @JoinColumn(name = "school_id", referencedColumnName = "id")

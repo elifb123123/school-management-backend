@@ -40,4 +40,6 @@ public interface TeacherService {
     //Belirli bir öğretmene ait öğrencileri getir
     List<StudentResponse> getStudentsOfTeacher(Long teacherId);
 
+    List<String> getAllBranches();
+
 }

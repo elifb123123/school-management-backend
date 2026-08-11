@@ -89,4 +89,10 @@ public class TeacherController {
         teacherService.unlinkStudent(teacherId, studentId);
         return ResponseEntity.noContent().build();
     }
+
+
+    @GetMapping("/branches")
+    public ResponseEntity<List<String>> getBranches() {
+        return ResponseEntity.ok(teacherService.getAllBranches());
+    }
 }

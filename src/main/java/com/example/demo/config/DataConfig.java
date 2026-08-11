@@ -4,6 +4,7 @@ import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
 import com.example.demo.student.persistence.Student;
 import com.example.demo.student.persistence.StudentRepository;
+import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -43,6 +44,7 @@ public class DataConfig {
                 Teacher john = new Teacher();
                 john.setName("John Smith");
                 john.setEmail("jhon@gmail.com");
+                john.setBranch(Branch.CHEMISTRY);
                 john.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
                 Student ayse = studentRepository.findStudentByName("ayse")
                         .orElseThrow(() -> new RuntimeException("Ayşe bulunamadı!"));
@@ -56,6 +58,7 @@ public class DataConfig {
                 Teacher maria = new Teacher();
                 maria.setName("Maria Garcia");
                 maria.setEmail("maria@gmail.com");
+                maria.setBranch(Branch.MATHEMATICS);
                 maria.setSchool(schoolRepository.findSchoolBySchoolName("School 2").orElse(null));
 
                 teacherRepository.saveAll(List.of(john, maria));
