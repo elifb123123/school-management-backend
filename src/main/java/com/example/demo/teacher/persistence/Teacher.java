@@ -2,6 +2,7 @@ package com.example.demo.teacher.persistence;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.student.persistence.Student;
+import com.example.demo.user.persistence.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,6 +46,10 @@ public class Teacher {
     )
     private Set<Student> students = new HashSet<>();
 
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
     public Teacher(String name) {
         this.name = name;

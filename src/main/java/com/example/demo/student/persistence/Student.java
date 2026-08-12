@@ -3,6 +3,7 @@ package com.example.demo.student.persistence;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.teacher.persistence.Teacher;
+import com.example.demo.user.persistence.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,6 +42,10 @@ public class Student {
 
     @ManyToMany(mappedBy = "students")
     private Set<Teacher> teachers;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
     public Student(String name, String email, LocalDate dateOfBirth) {
         this.name = name;
