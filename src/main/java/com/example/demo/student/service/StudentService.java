@@ -3,6 +3,7 @@ package com.example.demo.student.service;
 import com.example.demo.student.dto.StudentRequest;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.user.persistence.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,7 +14,7 @@ public interface StudentService {
 
     Page<StudentResponse> getStudents(String name, String email, LocalDate birthDate, Pageable pageable);
 
-    StudentResponse addNewStudent(StudentRequest studentRequest);
+    StudentResponse registerStudent(StudentRequest studentRequest, User user);
 
     void deleteStudent(Long studentId);
 

@@ -18,9 +18,11 @@ public class SecurityConfig {
 
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable) //post, put, delete, patch isteklerine izin vermek için bunu engellemek zorundayız.
-                .authorizeHttpRequests(request -> request.requestMatchers("/api/register/principal").permitAll()
-                        .requestMatchers("/api/register/teacher").hasRole("PRINCIPAL")// sadece principal rolüne sahip kullanıcılar öğretmen ekleyebilir.
-                        .anyRequest().authenticated())// eğer bunu yazmazsak csrfyi disabled ettiğimiz için hiç bir kontrol yapmaz herşeye izin verir. Bu yüzden her isteğin authenticated olmasını istiyoruz.
+                .authorizeHttpRequests(request ->
+                        request.requestMatchers("/api/register/principal").permitAll()
+                                .requestMatchers("/api/register/teacher").hasRole("PRINCIPAL")// sadece principal rolüne sahip kullanıcılar öğretmen ekleyebilir.
+                                .requestMatchers("/api/register/student").hasRole("PRINCIPAL")// sadece principal rolüne sahip kullanıcılar öğrenci ekleyebilir.
+                                .anyRequest().authenticated())// eğer bunu yazmazsak csrfyi disabled ettiğimiz için hiç bir kontrol yapmaz herşeye izin verir. Bu yüzden her isteğin authenticated olmasını istiyoruz.
                 /*
                  * anyRequest().authenticated() giriş yapan herkes görebilir.
                  * anyRequest().permitAll() herkes görebilir.

@@ -25,11 +25,9 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false, unique = true)
-    private String email;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
 
     private LocalDate dateOfBirth;
 
@@ -43,15 +41,6 @@ public class Student {
     @ManyToMany(mappedBy = "students")
     private Set<Teacher> teachers;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;
-
-    public Student(String name, String email, LocalDate dateOfBirth) {
-        this.name = name;
-        this.email = email;
-        this.dateOfBirth = dateOfBirth;
-    }
 
     public Integer getAge() {
         return Period.between(dateOfBirth, LocalDate.now()).getYears();

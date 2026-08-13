@@ -13,6 +13,7 @@ import com.example.demo.student.persistence.specification.StudentSpecification;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.service.TeacherService;
+import com.example.demo.user.persistence.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -56,14 +57,11 @@ public class StudentServiceImpl implements StudentService {
         return studentPage.map(studentMapper::toResponse);
     }
 
-    public StudentResponse addNewStudent(StudentRequest studentRequest) {
-        if (studentRepository.existsByEmail(studentRequest.email())) {
-            throw new ResourceAlreadyExistsException("Student", "email", studentRequest.email());
-        }
+    public StudentResponse registerStudent(StudentRequest studentRequest, User user) {
 
         Student student = studentMapper.toEntity(studentRequest);
         student.setSchool(resolveSchool(studentRequest.schoolId()));
-
+        student.setUser(user);
         Student saved = studentRepository.save(student);
         log.info("Saved student successfully");
         return studentMapper.toResponse(saved);

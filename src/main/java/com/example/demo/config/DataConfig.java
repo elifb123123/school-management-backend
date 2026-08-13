@@ -2,6 +2,7 @@ package com.example.demo.config;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
+import com.example.demo.student.dto.StudentRequest;
 import com.example.demo.student.persistence.Student;
 import com.example.demo.student.persistence.StudentRepository;
 import com.example.demo.teacher.dto.TeacherRequest;
@@ -9,6 +10,7 @@ import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import com.example.demo.teacher.service.TeacherService;
+import com.example.demo.user.dto.StudentRegistrationRequest;
 import com.example.demo.user.dto.TeacherRegistrationRequest;
 import com.example.demo.user.dto.UserRequest;
 import com.example.demo.user.service.UserService;
@@ -39,11 +41,18 @@ public class DataConfig {
             }
 
             if (studentRepository.findAll().isEmpty()) {
-                Student ayse = new Student("ayse", "ayse@gmail.com", LocalDate.of(2003, Month.MARCH, 5));
-                Student alex = new Student("alex", "alex@gmail.com", LocalDate.of(2003, Month.MARCH, 5));
-                ayse.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
-                alex.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
-                studentRepository.saveAll(List.of(ayse, alex));
+                School school1 = schoolRepository.findSchoolBySchoolName("School 1")
+                        .orElseThrow(() -> new RuntimeException("School 1 bulunamadı!"));
+
+                userService.registerStudent(new StudentRegistrationRequest(
+                        new UserRequest("ayse", "ayse@gmail.com", "password"),
+                        new StudentRequest(LocalDate.of(2003, Month.MARCH, 5), school1.getId())
+                ));
+
+                userService.registerStudent(new StudentRegistrationRequest(
+                        new UserRequest("alex", "alex@gmail.com", "password"),
+                        new StudentRequest(LocalDate.of(2003, Month.MARCH, 5), school1.getId())
+                ));
             }
 
             if (teacherRepository.findAll().isEmpty()) {
@@ -67,9 +76,13 @@ public class DataConfig {
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("John Smith bulunamadı!"));
 
-                Student ayse = studentRepository.findStudentByName("ayse")
+                Student ayse = studentRepository.findAll().stream()
+                        .filter(s -> s.getUser().getUsername().equals("ayse"))
+                        .findFirst()
                         .orElseThrow(() -> new RuntimeException("Ayşe bulunamadı!"));
-                Student alex = studentRepository.findStudentByName("alex")
+                Student alex = studentRepository.findAll().stream()
+                        .filter(s -> s.getUser().getUsername().equals("alex"))
+                        .findFirst()
                         .orElseThrow(() -> new RuntimeException("Alex bulunamadı!"));
 
                 teacherService.linkStudent(john.getId(), ayse.getId());

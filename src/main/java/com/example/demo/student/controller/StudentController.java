@@ -42,11 +42,6 @@ public class StudentController {
     }
 
     // TODO: RequestBody ??
-    @PostMapping
-    public ResponseEntity<StudentResponse> registerNewStudent(@RequestBody @Valid StudentRequest studentRequest) {
-        StudentResponse created = studentService.addNewStudent(studentRequest);
-        return ResponseEntity.status(201).body(created);
-    }
 
     @DeleteMapping(path = "/{studentId}")
     public ResponseEntity<Void> deleteStudent(@PathVariable Long studentId) {

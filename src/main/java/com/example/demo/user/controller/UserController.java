@@ -1,5 +1,6 @@
 package com.example.demo.user.controller;
 
+import com.example.demo.user.dto.StudentRegistrationRequest;
 import com.example.demo.user.dto.TeacherRegistrationRequest;
 import com.example.demo.user.dto.UserRequest;
 import com.example.demo.user.dto.UserResponse;
@@ -31,8 +32,8 @@ public class UserController {
         return userService.registerTeacher(teacherRegistrationRequest);
     }
 
-//    @PostMapping("/register/student")
-//    public UserResponse registerStudent(@RequestBody UserRequest userRequest) {
-//        return userService.registerStudent(userRequest);
-//    }
+    @PostMapping("/register/student")
+    public UserResponse registerStudent(@RequestBody StudentRegistrationRequest studentRegistrationRequest) {
+        return userService.registerStudent(studentRegistrationRequest);
+    }
 }
