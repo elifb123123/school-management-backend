@@ -14,6 +14,7 @@ import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import com.example.demo.teacher.persistence.specification.TeacherSpecification;
+import com.example.demo.user.persistence.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -59,16 +60,17 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public TeacherResponse createTeacher(TeacherRequest teacherRequest) {
+    public TeacherResponse registerTeacher(TeacherRequest teacherRequest, User user) {
         Long schoolId = teacherRequest.schoolId();
         School school = schoolRepository.findById(schoolId)
                 .orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
 
         Teacher teacher = teacherMapper.toEntity(teacherRequest);
         teacher.setSchool(school);
+        teacher.setUser(user);
 
         Teacher saved = teacherRepository.save(teacher);
-        log.info("Created teacher: {}", saved.getName());
+        log.info("Registered teacher: {}", saved.getId());
         return teacherMapper.toResponse(saved);
     }
 
@@ -85,7 +87,7 @@ public class TeacherServiceImpl implements TeacherService {
         teacher.setSchool(school);
 
         Teacher updated = teacherRepository.save(teacher);
-        log.info("Updated teacher: {}", updated.getName());
+        log.info("Updated teacher: {}", updated.getId());
         return teacherMapper.toResponse(updated);
     }
 

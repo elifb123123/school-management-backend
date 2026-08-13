@@ -16,6 +16,8 @@ public interface TeacherMapper {
         // resolve School by name in the service (needs a repository lookup)
     Teacher toEntity(TeacherRequest studentRequest);
 
+    @Mapping(target = "name", source = "user.username")
+    @Mapping(target = "email", source = "user.email")
     @Mapping(target = "schoolName", source = "school.schoolName")
     TeacherResponse toResponse(Teacher teacher);
 

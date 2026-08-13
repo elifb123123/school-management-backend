@@ -24,7 +24,9 @@ public class User {
     private String email;
     @Column(nullable = false)
     private String password;
-    private String role = "USER";
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
 
 //    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

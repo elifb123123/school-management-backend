@@ -10,7 +10,7 @@ public class TeacherSpecification {
             if (name == null || name.trim().isEmpty()) {
                 return null;
             } else {
-                return criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%");
+                return criteriaBuilder.like(criteriaBuilder.lower(root.get("user").get("username")), "%" + name.toLowerCase() + "%");
             }
         };
     }

@@ -4,9 +4,14 @@ import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
 import com.example.demo.student.persistence.Student;
 import com.example.demo.student.persistence.StudentRepository;
+import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
+import com.example.demo.teacher.service.TeacherService;
+import com.example.demo.user.dto.TeacherRegistrationRequest;
+import com.example.demo.user.dto.UserRequest;
+import com.example.demo.user.service.UserService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +19,6 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
-import java.util.Set;
 
 
 @Configuration
@@ -22,7 +26,9 @@ public class DataConfig {
 
 
     @Bean
-    CommandLineRunner commandLineRunner(StudentRepository studentRepository, TeacherRepository teacherRepository, SchoolRepository schoolRepository) {
+    CommandLineRunner commandLineRunner(StudentRepository studentRepository, SchoolRepository schoolRepository,
+                                         TeacherRepository teacherRepository, UserService userService,
+                                         TeacherService teacherService) {
         return args -> {
             if (schoolRepository.count() == 0) {
                 School school1 = new School("School 1");
@@ -41,27 +47,33 @@ public class DataConfig {
             }
 
             if (teacherRepository.findAll().isEmpty()) {
-                Teacher john = new Teacher();
-                john.setName("John Smith");
-                john.setEmail("jhon@gmail.com");
-                john.setBranch(Branch.CHEMISTRY);
-                john.setSchool(schoolRepository.findSchoolBySchoolName("School 1").orElse(null));
+                School school1 = schoolRepository.findSchoolBySchoolName("School 1")
+                        .orElseThrow(() -> new RuntimeException("School 1 bulunamadı!"));
+                School school2 = schoolRepository.findSchoolBySchoolName("School 2")
+                        .orElseThrow(() -> new RuntimeException("School 2 bulunamadı!"));
+
+                userService.registerTeacher(new TeacherRegistrationRequest(
+                        new UserRequest("john.smith", "jhon@gmail.com", "password"),
+                        new TeacherRequest(Branch.CHEMISTRY, school1.getId())
+                ));
+
+                userService.registerTeacher(new TeacherRegistrationRequest(
+                        new UserRequest("maria.garcia", "maria@gmail.com", "password"),
+                        new TeacherRequest(Branch.MATHEMATICS, school2.getId())
+                ));
+
+                Teacher john = teacherRepository.findAll().stream()
+                        .filter(t -> t.getUser().getUsername().equals("john.smith"))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("John Smith bulunamadı!"));
+
                 Student ayse = studentRepository.findStudentByName("ayse")
                         .orElseThrow(() -> new RuntimeException("Ayşe bulunamadı!"));
-
                 Student alex = studentRepository.findStudentByName("alex")
                         .orElseThrow(() -> new RuntimeException("Alex bulunamadı!"));
-                // Null riski kalmadığı için Set.of güvenle kullanılabilir
-                john.setStudents(Set.of(ayse, alex));
-                // student'i teacher'e geri baglayamıyoruz. Fetch lazy olduğu için buradan studenti çagıramıyor.
-                // dolayısıyla ogrencinin ogretmenlerine doğrudan student nesnesi üzerinden erişemeyiz.
-                Teacher maria = new Teacher();
-                maria.setName("Maria Garcia");
-                maria.setEmail("maria@gmail.com");
-                maria.setBranch(Branch.MATHEMATICS);
-                maria.setSchool(schoolRepository.findSchoolBySchoolName("School 2").orElse(null));
 
-                teacherRepository.saveAll(List.of(john, maria));
+                teacherService.linkStudent(john.getId(), ayse.getId());
+                teacherService.linkStudent(john.getId(), alex.getId());
             }
         };
     }

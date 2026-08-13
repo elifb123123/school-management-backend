@@ -25,17 +25,16 @@ public class Teacher {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-
-    @Column(unique = true)
-    private String email;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Branch branch;
 
     @ManyToOne
-    @JoinColumn(name = "school_id", referencedColumnName = "id")
+    @JoinColumn(name = "school_id", referencedColumnName = "id", nullable = false)
     private School school;
 
     @ManyToMany
@@ -46,13 +45,5 @@ public class Teacher {
     )
     private Set<Student> students = new HashSet<>();
 
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;
-
-    public Teacher(String name) {
-        this.name = name;
-    }
 
 }

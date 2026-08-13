@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,13 +41,6 @@ public class TeacherController {
         return ResponseEntity.ok(teacher);
     }
 
-    // POST /api/teacher
-    @PostMapping
-    public ResponseEntity<TeacherResponse> createTeacher(@RequestBody @Valid TeacherRequest teacherRequest) {
-        //Don't want orphan teachers
-        TeacherResponse created = teacherService.createTeacher(teacherRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
 
     // PUT /api/teachers/{id}
     @PutMapping("/{id}")
