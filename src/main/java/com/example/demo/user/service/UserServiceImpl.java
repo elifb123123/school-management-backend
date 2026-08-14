@@ -1,8 +1,6 @@
 package com.example.demo.user.service;
 
 import com.example.demo.exception.ResourceAlreadyExistsException;
-import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.school.persistence.School;
 import com.example.demo.school.service.SchoolService;
 import com.example.demo.student.service.StudentService;
 import com.example.demo.teacher.service.TeacherService;
@@ -11,7 +9,7 @@ import com.example.demo.user.mapper.UserMapper;
 import com.example.demo.user.persistence.Role;
 import com.example.demo.user.persistence.User;
 import com.example.demo.user.persistence.UserRepository;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,9 +52,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponse registerTeacher(TeacherRegistrationRequest teacherRegistrationRequest, String principalEmail) {
-        ensureSchoolMatchesPrincipal(teacherRegistrationRequest.teacherRequest().schoolId(), principalEmail);
-        // A principal can only register teachers to their own school.
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #teacherRegistrationRequest.teacherRequest.schoolId)")
+    // A principal can only register teachers to their own school.
+    public UserResponse registerTeacher(TeacherRegistrationRequest teacherRegistrationRequest) {
         UserRequest userRequest = teacherRegistrationRequest.userRequest();
         User user = userMapper.toEntity(userRequest);
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -73,9 +71,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponse registerStudent(StudentRegistrationRequest studentRegistrationRequest, String principalEmail) {
-        ensureSchoolMatchesPrincipal(studentRegistrationRequest.studentRequest().schoolId(), principalEmail);
-        // A principal can only register students to their own school.
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #studentRegistrationRequest.studentRequest().schoolId())")
+    // A principal can only register students to their own school.
+    public UserResponse registerStudent(StudentRegistrationRequest studentRegistrationRequest) {
         User user = userMapper.toEntity(studentRegistrationRequest.userRequest());
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new ResourceAlreadyExistsException("User", "email", user.getEmail());
@@ -88,12 +86,4 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    private void ensureSchoolMatchesPrincipal(Long schoolId, String principalEmail) {
-        User principal = userRepository.findByEmail(principalEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", principalEmail));
-        School principalSchool = schoolService.getSchoolByPrincipal(principal);
-        if (!principalSchool.getId().equals(schoolId)) {
-            throw new AccessDeniedException("Principal does not have permission to register users for this school.");
-        }
-    }
 }

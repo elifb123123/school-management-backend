@@ -9,7 +9,7 @@ public interface UserService {
 
     UserResponse registerPrincipal(PrincipalRegistrationRequest principalRegistrationRequest);
 
-    UserResponse registerTeacher(TeacherRegistrationRequest teacherRegistrationRequest, String principalEmail);
+    UserResponse registerTeacher(TeacherRegistrationRequest teacherRegistrationRequest);
 
-    UserResponse registerStudent(StudentRegistrationRequest studentRegistrationRequest, String principalEmail);
+    UserResponse registerStudent(StudentRegistrationRequest studentRegistrationRequest);
 }

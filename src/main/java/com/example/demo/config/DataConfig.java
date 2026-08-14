@@ -19,9 +19,13 @@ import com.example.demo.user.service.UserService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 
 
 @Configuration
@@ -49,15 +53,19 @@ public class DataConfig {
                 School school1 = schoolRepository.findSchoolBySchoolName("School 1")
                         .orElseThrow(() -> new RuntimeException("School 1 bulunamadı!"));
 
+                actAsPrincipal("principal1@gmail.com");
+
                 userService.registerStudent(new StudentRegistrationRequest(
                         new UserRequest("ayse", "ayse@gmail.com", "password"),
                         new StudentRequest(LocalDate.of(2003, Month.MARCH, 5), school1.getId())
-                ), "principal1@gmail.com");
+                ));
 
                 userService.registerStudent(new StudentRegistrationRequest(
                         new UserRequest("alex", "alex@gmail.com", "password"),
                         new StudentRequest(LocalDate.of(2003, Month.MARCH, 5), school1.getId())
-                ), "principal1@gmail.com");
+                ));
+
+                SecurityContextHolder.clearContext();
             }
 
             if (teacherRepository.findAll().isEmpty()) {
@@ -66,15 +74,19 @@ public class DataConfig {
                 School school2 = schoolRepository.findSchoolBySchoolName("School 2")
                         .orElseThrow(() -> new RuntimeException("School 2 bulunamadı!"));
 
+                actAsPrincipal("principal1@gmail.com");
                 userService.registerTeacher(new TeacherRegistrationRequest(
                         new UserRequest("john.smith", "jhon@gmail.com", "password"),
                         new TeacherRequest(Branch.CHEMISTRY, school1.getId())
-                ), "principal1@gmail.com");
+                ));
 
+                actAsPrincipal("principal2@gmail.com");
                 userService.registerTeacher(new TeacherRegistrationRequest(
                         new UserRequest("maria.garcia", "maria@gmail.com", "password"),
                         new TeacherRequest(Branch.MATHEMATICS, school2.getId())
-                ), "principal2@gmail.com");
+                ));
+
+                SecurityContextHolder.clearContext();
 
                 Teacher john = teacherRepository.findAll().stream()
                         .filter(t -> t.getUser().getName().equals("john.smith"))
@@ -94,5 +106,15 @@ public class DataConfig {
                 teacherService.linkStudent(john.getId(), alex.getId());
             }
         };
+    }
+
+    // @PreAuthorize korumalı register metodlarını CommandLineRunner (hiç Authentication olmayan bir bağlamda)
+    // çağırabilmek için, seed sırasında geçici olarak "şu principal giriş yapmış gibi" davranıyoruz.
+    private void actAsPrincipal(String principalEmail) {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        principalEmail, null, List.of(new SimpleGrantedAuthority("ROLE_PRINCIPAL"))
+                )
+        );
     }
 }

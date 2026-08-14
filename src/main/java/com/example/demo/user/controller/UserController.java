@@ -5,7 +5,6 @@ import com.example.demo.user.dto.StudentRegistrationRequest;
 import com.example.demo.user.dto.TeacherRegistrationRequest;
 import com.example.demo.user.dto.UserResponse;
 import com.example.demo.user.service.UserService;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,12 +28,12 @@ public class UserController {
     }
 
     @PostMapping("/register/teacher")
-    public UserResponse registerTeacher(@RequestBody TeacherRegistrationRequest teacherRegistrationRequest, Authentication authentication) {
-        return userService.registerTeacher(teacherRegistrationRequest, authentication.getName());
+    public UserResponse registerTeacher(@RequestBody TeacherRegistrationRequest teacherRegistrationRequest) {
+        return userService.registerTeacher(teacherRegistrationRequest);
     }
 
     @PostMapping("/register/student")
-    public UserResponse registerStudent(@RequestBody StudentRegistrationRequest studentRegistrationRequest, Authentication authentication) {
-        return userService.registerStudent(studentRegistrationRequest, authentication.getName());
+    public UserResponse registerStudent(@RequestBody StudentRegistrationRequest studentRegistrationRequest) {
+        return userService.registerStudent(studentRegistrationRequest);
     }
 }
