@@ -35,13 +35,7 @@ public class SchoolController {
     public SchoolResponse getSchoolById(@PathVariable Long schoolId) {
         return schoolService.getSchoolById(schoolId);
     }
-
-
-    @PostMapping
-    public ResponseEntity<SchoolResponse> registerNewSchool(@RequestBody @Valid SchoolRequest schoolRequest) {
-        SchoolResponse created = schoolService.addNewSchool(schoolRequest);
-        return ResponseEntity.status(201).body(created);//201 for created
-    }
+    
 
     @DeleteMapping("/{schoolId}")
     public ResponseEntity<Void> deleteSchool(@PathVariable Long schoolId) {

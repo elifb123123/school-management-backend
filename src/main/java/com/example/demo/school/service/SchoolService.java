@@ -4,6 +4,7 @@ import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.user.persistence.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,7 +14,7 @@ public interface SchoolService {
 
     SchoolResponse getSchoolById(Long schoolId);
 
-    SchoolResponse addNewSchool(SchoolRequest schoolRequest);
+    SchoolResponse registerSchool(SchoolRequest schoolRequest, User user);
 
     void deleteSchool(Long schoolId);
 

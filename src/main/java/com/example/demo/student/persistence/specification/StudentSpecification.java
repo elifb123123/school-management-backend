@@ -12,7 +12,7 @@ public class StudentSpecification {
             if (name == null || name.trim().isEmpty()) {
                 return null;
             } else {
-                return criteriaBuilder.like(criteriaBuilder.lower(root.get("user").get("username")),
+                return criteriaBuilder.like(criteriaBuilder.lower(root.get("user").get("name")),
                         "%" + name.toLowerCase() + "%");
             }
 

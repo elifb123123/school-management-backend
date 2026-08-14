@@ -1,8 +1,8 @@
 package com.example.demo.user.controller;
 
+import com.example.demo.user.dto.PrincipalRegistrationRequest;
 import com.example.demo.user.dto.StudentRegistrationRequest;
 import com.example.demo.user.dto.TeacherRegistrationRequest;
-import com.example.demo.user.dto.UserRequest;
 import com.example.demo.user.dto.UserResponse;
 import com.example.demo.user.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,8 +23,8 @@ public class UserController {
     }
 
     @PostMapping("/register/principal")
-    public UserResponse registerPrincipal(@RequestBody UserRequest userRequest) {
-        return userService.registerPrincipal(userRequest);
+    public UserResponse registerPrincipal(@RequestBody PrincipalRegistrationRequest principalRegistrationRequest) {
+        return userService.registerPrincipal(principalRegistrationRequest);
     }
 
     @PostMapping("/register/teacher")

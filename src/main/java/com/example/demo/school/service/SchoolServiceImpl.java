@@ -13,15 +13,14 @@ import com.example.demo.student.persistence.Student;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.persistence.Teacher;
+import com.example.demo.user.persistence.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -59,10 +58,12 @@ public class SchoolServiceImpl implements SchoolService {
 
 
     @Override
-    public SchoolResponse addNewSchool(SchoolRequest schoolRequest) {
-        School saved = schoolRepository.save(schoolMapper.toEntity(schoolRequest));
+    public SchoolResponse registerSchool(SchoolRequest schoolRequest, User user) {
+        School school = schoolMapper.toEntity(schoolRequest);
+        school.setUser(user);
+        school = schoolRepository.save(school);
         log.info("Added new school: {}", schoolRequest.schoolName());
-        return schoolMapper.toResponse(saved);
+        return schoolMapper.toResponse(school);
     }
 
     @Override
@@ -80,7 +81,7 @@ public class SchoolServiceImpl implements SchoolService {
     @Override
     public SchoolResponse updateSchool(Long schoolId, SchoolRequest schoolRequest) {
 
-        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
+        School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
         schoolMapper.updateSchoolFromDto(schoolRequest, school);
         School updatedSchool = schoolRepository.save(school);
         log.info("Updated school: {}", school);

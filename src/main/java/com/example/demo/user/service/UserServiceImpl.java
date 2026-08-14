@@ -1,12 +1,10 @@
 package com.example.demo.user.service;
 
 import com.example.demo.exception.ResourceAlreadyExistsException;
+import com.example.demo.school.service.SchoolService;
 import com.example.demo.student.service.StudentService;
 import com.example.demo.teacher.service.TeacherService;
-import com.example.demo.user.dto.StudentRegistrationRequest;
-import com.example.demo.user.dto.TeacherRegistrationRequest;
-import com.example.demo.user.dto.UserRequest;
-import com.example.demo.user.dto.UserResponse;
+import com.example.demo.user.dto.*;
 import com.example.demo.user.mapper.UserMapper;
 import com.example.demo.user.persistence.Role;
 import com.example.demo.user.persistence.User;
@@ -23,17 +21,21 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final TeacherService teacherService;
     private final StudentService studentService;
+    private final SchoolService schoolService;
 
-    UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, TeacherService teacherService, StudentService studentService) {
+    UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, TeacherService teacherService, StudentService studentService, SchoolService schoolService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.teacherService = teacherService;
         this.studentService = studentService;
+        this.schoolService = schoolService;
     }
 
     @Override
-    public UserResponse registerPrincipal(UserRequest userRequest) {
+    @Transactional
+    public UserResponse registerPrincipal(PrincipalRegistrationRequest principalRegistrationRequest) {
+        UserRequest userRequest = principalRegistrationRequest.userRequest();
 
         User user = userMapper.toEntity(userRequest);
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -42,6 +44,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(userRequest.password()));
         user.setRole(Role.PRINCIPAL);
         User savedUser = userRepository.save(user);
+        schoolService.registerSchool(principalRegistrationRequest.schoolRequest(), savedUser);
         return userMapper.toResponse(savedUser);
     }
 

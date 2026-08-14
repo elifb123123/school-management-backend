@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
 import com.example.demo.student.dto.StudentRequest;
@@ -10,6 +11,7 @@ import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import com.example.demo.teacher.service.TeacherService;
+import com.example.demo.user.dto.PrincipalRegistrationRequest;
 import com.example.demo.user.dto.StudentRegistrationRequest;
 import com.example.demo.user.dto.TeacherRegistrationRequest;
 import com.example.demo.user.dto.UserRequest;
@@ -20,7 +22,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.List;
 
 
 @Configuration
@@ -33,11 +34,15 @@ public class DataConfig {
                                          TeacherService teacherService) {
         return args -> {
             if (schoolRepository.count() == 0) {
-                School school1 = new School("School 1");
-                school1.setAddress("123 Main St, Springfield");
-                School school2 = new School("School 2");
-                school2.setAddress("456 Oak Ave, Shelbyville");
-                schoolRepository.saveAll(List.of(school1, school2));
+                userService.registerPrincipal(new PrincipalRegistrationRequest(
+                        new UserRequest("principal1", "principal1@gmail.com", "password"),
+                        new SchoolRequest("School 1", "123 Main St, Springfield")
+                ));
+
+                userService.registerPrincipal(new PrincipalRegistrationRequest(
+                        new UserRequest("principal2", "principal2@gmail.com", "password"),
+                        new SchoolRequest("School 2", "456 Oak Ave, Shelbyville")
+                ));
             }
 
             if (studentRepository.findAll().isEmpty()) {
@@ -72,16 +77,16 @@ public class DataConfig {
                 ));
 
                 Teacher john = teacherRepository.findAll().stream()
-                        .filter(t -> t.getUser().getUsername().equals("john.smith"))
+                        .filter(t -> t.getUser().getName().equals("john.smith"))
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("John Smith bulunamadı!"));
 
                 Student ayse = studentRepository.findAll().stream()
-                        .filter(s -> s.getUser().getUsername().equals("ayse"))
+                        .filter(s -> s.getUser().getName().equals("ayse"))
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("Ayşe bulunamadı!"));
                 Student alex = studentRepository.findAll().stream()
-                        .filter(s -> s.getUser().getUsername().equals("alex"))
+                        .filter(s -> s.getUser().getName().equals("alex"))
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("Alex bulunamadı!"));
 
