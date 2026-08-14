@@ -108,4 +108,11 @@ public class SchoolServiceImpl implements SchoolService {
         return teachers.map(teacherMapper::toResponse);
     }
 
+
+    @Override
+    public School getSchoolByPrincipal(User principal) {
+        return schoolRepository.findByUser(principal)
+                .orElseThrow(() -> new ResourceNotFoundException("School", "user", principal.getId()));
+    }
+
 }

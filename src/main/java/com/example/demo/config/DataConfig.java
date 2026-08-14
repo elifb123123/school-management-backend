@@ -52,12 +52,12 @@ public class DataConfig {
                 userService.registerStudent(new StudentRegistrationRequest(
                         new UserRequest("ayse", "ayse@gmail.com", "password"),
                         new StudentRequest(LocalDate.of(2003, Month.MARCH, 5), school1.getId())
-                ));
+                ), "principal1@gmail.com");
 
                 userService.registerStudent(new StudentRegistrationRequest(
                         new UserRequest("alex", "alex@gmail.com", "password"),
                         new StudentRequest(LocalDate.of(2003, Month.MARCH, 5), school1.getId())
-                ));
+                ), "principal1@gmail.com");
             }
 
             if (teacherRepository.findAll().isEmpty()) {
@@ -69,12 +69,12 @@ public class DataConfig {
                 userService.registerTeacher(new TeacherRegistrationRequest(
                         new UserRequest("john.smith", "jhon@gmail.com", "password"),
                         new TeacherRequest(Branch.CHEMISTRY, school1.getId())
-                ));
+                ), "principal1@gmail.com");
 
                 userService.registerTeacher(new TeacherRegistrationRequest(
                         new UserRequest("maria.garcia", "maria@gmail.com", "password"),
                         new TeacherRequest(Branch.MATHEMATICS, school2.getId())
-                ));
+                ), "principal2@gmail.com");
 
                 Teacher john = teacherRepository.findAll().stream()
                         .filter(t -> t.getUser().getName().equals("john.smith"))

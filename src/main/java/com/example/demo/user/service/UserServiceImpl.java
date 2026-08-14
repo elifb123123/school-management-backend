@@ -1,6 +1,8 @@
 package com.example.demo.user.service;
 
 import com.example.demo.exception.ResourceAlreadyExistsException;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.school.persistence.School;
 import com.example.demo.school.service.SchoolService;
 import com.example.demo.student.service.StudentService;
 import com.example.demo.teacher.service.TeacherService;
@@ -9,9 +11,11 @@ import com.example.demo.user.mapper.UserMapper;
 import com.example.demo.user.persistence.Role;
 import com.example.demo.user.persistence.User;
 import com.example.demo.user.persistence.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -50,22 +54,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponse registerTeacher(TeacherRegistrationRequest teacherRegistrationRequest) {
+    public UserResponse registerTeacher(TeacherRegistrationRequest teacherRegistrationRequest, String principalEmail) {
+        ensureSchoolMatchesPrincipal(teacherRegistrationRequest.teacherRequest().schoolId(), principalEmail);
+        // A principal can only register teachers to their own school.
         UserRequest userRequest = teacherRegistrationRequest.userRequest();
         User user = userMapper.toEntity(userRequest);
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new ResourceAlreadyExistsException("User", "email", user.getEmail());
-        }
+        } //Check if the email of teacher already exists in the database
         user.setPassword(passwordEncoder.encode(userRequest.password()));
         user.setRole(Role.TEACHER);
         User savedUser = userRepository.save(user);
+        // Save teacher's information as a user
         teacherService.registerTeacher(teacherRegistrationRequest.teacherRequest(), savedUser);
+        // Save teacher's information as a teacher and connect with user profile.
         return userMapper.toResponse(savedUser);
     }
 
     @Override
     @Transactional
-    public UserResponse registerStudent(StudentRegistrationRequest studentRegistrationRequest) {
+    public UserResponse registerStudent(StudentRegistrationRequest studentRegistrationRequest, String principalEmail) {
+        ensureSchoolMatchesPrincipal(studentRegistrationRequest.studentRequest().schoolId(), principalEmail);
+        // A principal can only register students to their own school.
         User user = userMapper.toEntity(studentRegistrationRequest.userRequest());
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new ResourceAlreadyExistsException("User", "email", user.getEmail());
@@ -76,6 +86,14 @@ public class UserServiceImpl implements UserService {
         studentService.registerStudent(studentRegistrationRequest.studentRequest(), savedUser);
         return userMapper.toResponse(savedUser);
     }
+
+
+    private void ensureSchoolMatchesPrincipal(Long schoolId, String principalEmail) {
+        User principal = userRepository.findByEmail(principalEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", principalEmail));
+        School principalSchool = schoolService.getSchoolByPrincipal(principal);
+        if (!principalSchool.getId().equals(schoolId)) {
+            throw new AccessDeniedException("Principal does not have permission to register users for this school.");
+        }
+    }
 }
-
-
