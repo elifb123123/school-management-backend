@@ -32,4 +32,4 @@ out/
 Thumbs.db
 
 ### Spring Boot Yerel Ayarlar (Hassas Veriler) ###
-demo/src/main/resources/application.properties
+src/main/resources/application.properties
