@@ -2,7 +2,6 @@ package com.example.demo.school.service;
 
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
-import com.example.demo.school.persistence.School;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.user.persistence.User;
@@ -25,5 +24,4 @@ public interface SchoolService {
 
     Page<TeacherResponse> getTeachersBySchoolId(Long schoolId, Pageable pageable);
 
-    School getSchoolByPrincipal(User principal);
 }

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,14 +53,17 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     @Transactional(readOnly = true)
-    public TeacherResponse getTeacherById(Long id) {
-        Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher ", "id", id));
-        log.info("Successfully fetched teacher by ID: {}", id);
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId)) " +
+            "|| @teacherSecurity.isSelf(authentication.name, #teacherId)")
+    public TeacherResponse getTeacherById(Long teacherId) {
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher ", "id", teacherId));
+        log.info("Successfully fetched teacher by ID: {}", teacherId);
         return teacherMapper.toResponse(teacher);
     }
 
     @Override
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #teacherRequest.schoolId())")
     public TeacherResponse registerTeacher(TeacherRequest teacherRequest, User user) {
         Long schoolId = teacherRequest.schoolId();
         School school = schoolRepository.findById(schoolId)
@@ -75,29 +79,28 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId))")
     public TeacherResponse updateTeacher(TeacherRequest teacherRequest, Long teacherId) {
         Teacher teacher = teacherRepository.findById(teacherId)
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher ", "id", teacherId));
 
         teacherMapper.updateTeacherFromRequest(teacherRequest, teacher);
+        //okul değiştirilemez.
 
-        // schoolId in the request may have changed; resolve and reassign the School
-        School school = schoolRepository.findById(teacherRequest.schoolId())
-                .orElseThrow(() -> new ResourceNotFoundException("School ", "school ID", teacherRequest.schoolId()));
-        teacher.setSchool(school);
-
-        Teacher updated = teacherRepository.save(teacher);
-        log.info("Updated teacher: {}", updated.getId());
-        return teacherMapper.toResponse(updated);
+        // gereksiz tekrar. hibernate zaten güncelliyor.
+        // Teacher updated = teacherRepository.save(teacher);
+        log.info("Updated teacher: {}", teacher.getId());
+        return teacherMapper.toResponse(teacher);
     }
 
     @Override
-    public void deleteTeacher(Long id) {
-        if (!teacherRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Teacher ", "id", id);
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId))")
+    public void deleteTeacher(Long teacherId) {
+        if (!teacherRepository.existsById(teacherId)) {
+            throw new ResourceNotFoundException("Teacher ", "id", teacherId);
         }
-        teacherRepository.deleteById(id);
-        log.info("Deleted teacher with ID: {}", id);
+        teacherRepository.deleteById(teacherId);
+        log.info("Deleted teacher with ID: {}", teacherId);
     }
 
     @Override
@@ -111,6 +114,8 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId))" +
+            " && @schoolSecurity.isPrincipalOf(authentication.name, @studentSecurity.findSchoolId(#studentId))")
     public void linkStudent(Long teacherId, Long studentId) {
         if (!teacherRepository.existsById(teacherId)) {
             throw new ResourceNotFoundException("Teacher", "id", teacherId);
@@ -123,6 +128,8 @@ public class TeacherServiceImpl implements TeacherService {
 
     // todo: parametrelerin if checkleri yapılmalı ...
     @Override
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId))" +
+            " && @schoolSecurity.isPrincipalOf(authentication.name, @studentSecurity.findSchoolId(#studentId))")
     public void unlinkStudent(Long teacherId, Long studentId) {
         if (!teacherRepository.existsById(teacherId)) {
             throw new ResourceNotFoundException("Teacher", "id", teacherId);
@@ -136,6 +143,8 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId)) || " +
+            "@teacherSecurity.isSelf(authentication.name, #teacherId)")
     public List<StudentResponse> getStudentsOfTeacher(Long teacherId) {
         if (Objects.nonNull(teacherId) && !teacherRepository.existsById(teacherId)) {
             throw new ResourceNotFoundException("Teacher", "id", teacherId);

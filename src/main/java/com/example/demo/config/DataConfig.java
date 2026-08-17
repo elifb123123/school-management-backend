@@ -102,8 +102,12 @@ public class DataConfig {
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("Alex bulunamadı!"));
 
+                // linkStudent artık @PreAuthorize korumalı (hem öğretmenin hem öğrencinin okulu kontrol ediliyor),
+                // bu yüzden çağırmadan önce yine principal1 gibi davranmamız gerekiyor.
+                actAsPrincipal("principal1@gmail.com");
                 teacherService.linkStudent(john.getId(), ayse.getId());
                 teacherService.linkStudent(john.getId(), alex.getId());
+                SecurityContextHolder.clearContext();
             }
         };
     }

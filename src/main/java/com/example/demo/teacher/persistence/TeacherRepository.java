@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TeacherRepository extends JpaRepository<Teacher, Long>, JpaSpecificationExecutor<Teacher> {
@@ -30,4 +31,10 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long>, JpaSpec
 
     @Query("SELECT s FROM Teacher t JOIN t.students s WHERE t.id = :teacherId")
     List<Student> findStudentsByTeacherId(@Param("teacherId") Long teacherId);
+
+    @Query("SELECT t.school.id FROM Teacher t WHERE t.id = :teacherId")
+    Optional<Long> findSchoolIdById(@Param("teacherId") Long teacherId);
+
+    @Query("SELECT t.user.email FROM Teacher t WHERE t.id = :teacherId")
+    Optional<String> findEmailById(@Param("teacherId") Long teacherId);
 }

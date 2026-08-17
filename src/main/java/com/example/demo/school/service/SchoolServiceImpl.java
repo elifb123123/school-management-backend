@@ -1,5 +1,6 @@
 package com.example.demo.school.service;
 
+import com.example.demo.exception.ResourceAlreadyExistsException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.dto.SchoolRequest;
 import com.example.demo.school.dto.SchoolResponse;
@@ -13,12 +14,15 @@ import com.example.demo.student.persistence.Student;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.persistence.Teacher;
+import com.example.demo.user.persistence.Role;
 import com.example.demo.user.persistence.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +45,7 @@ public class SchoolServiceImpl implements SchoolService {
         this.teacherMapper = teacherMapper;
     }
 
-    @Override
+
     public Page<SchoolResponse> getSchools(String name, Pageable pageable) {
         Specification<School> spec = Specification.where(SchoolSpecification.byName(name));
         Page<School> schoolPage = schoolRepository.findAll(spec, pageable);
@@ -49,7 +53,8 @@ public class SchoolServiceImpl implements SchoolService {
         return schoolPage.map(schoolMapper::toResponse);
     }
 
-    @Override
+
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #schoolId)")
     public SchoolResponse getSchoolById(Long schoolId) {
         School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
         log.info("Retrieved school response: {}", school);
@@ -57,8 +62,16 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
 
-    @Override
     public SchoolResponse registerSchool(SchoolRequest schoolRequest, User user) {
+        // Bu fonksiyon RegisterPrincipal tarafından kullanılıyor. RegisterPrincipal için herhangi bir güvenlik kontrolü yok çünkü herkes kayıt olabilir.
+        // bu fonksiyonu doğrudan çağıran bir requestde yok bu yüzden authentication nesnesi üzerinden kontrol yapamıyoruz.
+        // güvenlik kontrolünü preAuthorize ile yapamıyoruz. Dolayısıyla güvenlik kontrolünü manuel yazdım.
+        if (user.getRole() != Role.PRINCIPAL && user.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("Sadece principal veya admin rolündeki kullanıcılar okul oluşturabilir.");
+        }
+        if (schoolRepository.findByUser(user).isPresent()) {
+            throw new ResourceAlreadyExistsException("School", "user", user.getId());
+        }
         School school = schoolMapper.toEntity(schoolRequest);
         school.setUser(user);
         school = schoolRepository.save(school);
@@ -66,7 +79,8 @@ public class SchoolServiceImpl implements SchoolService {
         return schoolMapper.toResponse(school);
     }
 
-    @Override
+
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #schoolId)")
     public void deleteSchool(Long schoolId) {
 
         boolean exists = schoolRepository.existsById(schoolId);
@@ -78,7 +92,8 @@ public class SchoolServiceImpl implements SchoolService {
         log.info("Deleted school: {}", schoolId);
     }
 
-    @Override
+
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #schoolId)")
     public SchoolResponse updateSchool(Long schoolId, SchoolRequest schoolRequest) {
 
         School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
@@ -88,6 +103,7 @@ public class SchoolServiceImpl implements SchoolService {
         return schoolMapper.toResponse(updatedSchool);
     }
 
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #schoolId)")
     public Page<StudentResponse> getStudentsById(Long schoolId, Pageable pageable) {
         if (!schoolRepository.existsById(schoolId)) {
             throw new ResourceNotFoundException("School ", "id", schoolId);
@@ -97,6 +113,7 @@ public class SchoolServiceImpl implements SchoolService {
         return students.map(studentMapper::toResponse);
     }
 
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #schoolId)")
     public Page<TeacherResponse> getTeachersBySchoolId(Long schoolId, Pageable pageable) {
 
         if (!schoolRepository.existsById(schoolId)) {
@@ -108,11 +125,5 @@ public class SchoolServiceImpl implements SchoolService {
         return teachers.map(teacherMapper::toResponse);
     }
 
-
-    @Override
-    public School getSchoolByPrincipal(User principal) {
-        return schoolRepository.findByUser(principal)
-                .orElseThrow(() -> new ResourceNotFoundException("School", "user", principal.getId()));
-    }
 
 }

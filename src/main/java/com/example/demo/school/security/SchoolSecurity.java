@@ -2,6 +2,7 @@ package com.example.demo.school.security;
 
 import com.example.demo.school.persistence.School;
 import com.example.demo.school.persistence.SchoolRepository;
+import com.example.demo.user.persistence.Role;
 import com.example.demo.user.persistence.User;
 import com.example.demo.user.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +19,17 @@ public class SchoolSecurity {
 
     //bu fonksiyon @PreAuthorize'da kullanılmak için yazıldığı için true ya da false dönmek zorunda. O yüzden bulunamadığında access denied exception fırlatamıyoruz sadece false dönüyoruz.
     public boolean isPrincipalOf(String principalEmail, Long schoolId) {
+
         Optional<User> user = userRepository.findByEmail(principalEmail);
+
         if (user.isEmpty()) {
             return false;
         }
+
+        if (user.get().getRole() == Role.ADMIN) { //Adminin her şeye yetkisi var.
+            return true;
+        }
+
         Optional<School> school = schoolRepository.findByUser(user.get());
         if (school.isEmpty()) {
             return false;

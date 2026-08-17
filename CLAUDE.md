@@ -65,6 +65,15 @@ Per-domain pattern to follow when adding a new domain or endpoint:
 7. `controller/EntityController.java` — thin `@RestController`, delegates directly to the service, returns DTOs/
    `Page<DTO>` (list endpoints take `Pageable` plus optional `@RequestParam` filters)
 
+A convention worth knowing when writing `update*`/read methods in any `*ServiceImpl`: an entity fetched via
+`repository.findById(id)` inside a `@Transactional` method is a Hibernate-managed object — mutating it directly
+(e.g. via a MapStruct `updateXFromRequest(request, @MappingTarget entity)` call) is enough, **no explicit
+`repository.save(...)` is needed**, dirty-checking flushes the change automatically at commit. Pure-read methods
+(`getById`, list, sub-resource GETs) should be annotated `@Transactional(readOnly = true)` instead of inheriting the
+class-level read-write `@Transactional` — besides the minor performance win (skips dirty-checking entirely), it
+makes Hibernate silently ignore any accidental entity mutation inside a method that's supposed to be read-only,
+rather than quietly flushing it.
+
 ### Identity vs. domain profile (`user`, `security`)
 
 `User` (`user/persistence/User.java`) holds login identity only — `email` (unique, used to log in), `password`
@@ -109,35 +118,95 @@ together, atomically:
 - Composite request DTOs live in `user/dto/` and wrap the existing per-domain request records instead of redeclaring
   fields: `PrincipalRegistrationRequest(UserRequest, SchoolRequest)`, `TeacherRegistrationRequest(UserRequest,
   TeacherRequest)`, `StudentRegistrationRequest(UserRequest, StudentRequest)`.
-- `registerTeacher`/`registerStudent` additionally take the calling principal's email (passed from
-  `UserController` via a Spring-injected `Authentication` parameter — `authentication.getName()`) and call the
-  private `ensureSchoolMatchesPrincipal(schoolId, principalEmail)` helper *before* creating anything: it looks up the
-  principal's own `User`, then their `School` via `SchoolService.getSchoolByPrincipal`, and throws
-  `AccessDeniedException` if the request's `schoolId` doesn't match. This is a **business-rule check layered on top
-  of** the role-based `SecurityConfig` rules below, not a replacement for them — `hasRole("PRINCIPAL")` only proves
-  "some principal," this proves "the principal who owns *this* school."
+- `registerTeacher`/`registerStudent` are `@PreAuthorize`-protected directly on the `UserServiceImpl` methods (e.g.
+  `@PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #teacherRegistrationRequest.teacherRequest.schoolId)")`),
+  reaching into the composite DTO's nested `schoolId` via SpEL — see the `@PreAuthorize`/`*Security` bean pattern
+  under Security below for how this and every other ownership check in the app works. This replaced an earlier
+  hand-written `ensureSchoolMatchesPrincipal` helper that did the same lookup manually; `UserController` no longer
+  needs an injected `Authentication` parameter because `authentication.name` is read directly inside the SpEL
+  expression instead. This is a **business-rule check layered on top of** the role-based `SecurityConfig` rules
+  below, not a replacement for them — `hasRole("PRINCIPAL")` only proves "some principal," this proves "the
+  principal who owns *this* school."
 
-### Security (`security/`)
+### Security (`security/`, plus a `security/` subpackage per domain)
 
-`SecurityConfig` and `UserDetailServiceImpl` live in `security/`, not `config/` — they're framework-integration code,
-distinct from generic app config and from the `user` domain's own CRUD logic.
+`SecurityConfig` and `UserDetailServiceImpl` live in the top-level `security/`, not `config/` — they're generic
+framework-integration code. Per-domain **authorization logic** (below) lives instead in each domain's own
+`security/` subpackage (`school/security/SchoolSecurity.java`, `teacher/security/TeacherSecurity.java`,
+`student/security/StudentSecurity.java`) — the top-level `security/` package is reserved for code with nothing
+domain-specific in it (login mechanics, the filter chain), not for "who can touch this School/Teacher/Student."
 
 **Login is email-based, not username-based.** `UserDetailServiceImpl.loadUserByUsername` looks users up via
 `UserRepository.findByEmail(...)` (despite the method being named `loadUserByUsername` — that name is fixed by the
 `UserDetailsService` interface contract, the parameter itself is just treated as an email) and builds the Spring
 Security `UserDetails` with `.username(user.getEmail())` — this second part matters: it's what makes
-`Authentication.getName()` return the email later (used by the school-ownership check above), so if login is ever
+`Authentication.getName()` return the email later (used by every ownership check below), so if login is ever
 changed to key off something else, that builder call has to change too, not just the repository lookup. There's no
 fallback `spring.security.user.*` account. Authorities are built as `"ROLE_" + role.name()` (never `.toString()` —
 `name()` is `final` on `Enum`, `toString()` is overridable and would silently break the authority string if someone
 customized it later).
 
-Rules (`SecurityConfig.filterChain`): `/api/register/principal` is `permitAll()` (bootstrapping — there would
-otherwise be no way to create the first account), `/api/register/teacher` and `/api/register/student` require
-`hasRole("PRINCIPAL")`, everything else requires `authenticated()`. **No other endpoint has role-specific rules
-yet** — any authenticated user of any role can currently hit any non-register endpoint (e.g. a `STUDENT` can call
-`DELETE /api/school/{id}`). This is a known gap, not an oversight; role rules for the rest of the API are planned but
-not yet written.
+**URL-level rules** (`SecurityConfig.filterChain`): `/api/register/principal` is `permitAll()` (bootstrapping —
+there would otherwise be no way to create the first account), `/api/register/teacher` and `/api/register/student`
+require `hasRole("PRINCIPAL")`, `GET /api/school`/`/api/teacher`/`/api/student` (the bare collection endpoints —
+exact-path match, does **not** cover `/api/school/{id}` or any sub-resource) require `hasRole("ADMIN")` — reserved
+for a future admin role/UI that doesn't exist yet (`Role.ADMIN` is in the enum but not currently assignable to any
+real account), everything else requires `authenticated()`.
+
+**`@PreAuthorize` + per-domain `*Security` bean pattern.** `SecurityConfig` carries `@EnableMethodSecurity` — without
+it every `@PreAuthorize` annotation below would be silently ignored, and every non-register endpoint would just fall
+back to the coarser `authenticated()` URL rule above. This is how every School/Teacher/Student CRUD method
+(create/update/delete/link/unlink, plus by-id and sub-resource GETs) enforces "who can touch *this specific row*":
+
+- `SchoolSecurity.isPrincipalOf(String principalEmail, Long schoolId)` is the **root** check every other domain's
+  check routes through: looks up the `User` by email, returns `true` immediately if `role == ADMIN` (the one place
+  the ADMIN bypass is implemented — new checks never need their own ADMIN branch, they just call into this),
+  otherwise resolves the caller's own `School` via `SchoolRepository.findByUser` and compares its id to `schoolId`.
+- `TeacherSecurity`/`StudentSecurity` each expose `findSchoolId(Long id)` and `isSelf(String requesterEmail, Long id)`.
+  Both delegate to a **repository projection query** (`TeacherRepository.findSchoolIdById`/`findEmailById`, JPQL
+  `SELECT t.school.id FROM Teacher t WHERE t.id = :id` / `SELECT t.user.email FROM Teacher t WHERE t.id = :id`) —
+  deliberately **not** `teacherRepository.findById(id)` plus navigating `.getSchool().getId()`/`.getUser().getEmail()`
+  in Java, because `Teacher.school` is `@ManyToOne` (default `EAGER`), so `findById` would hydrate the entire
+  `Teacher` row plus a joined `School` row just to read one FK/email column — wasteful for a check that runs on
+  every write and every by-id/sub-resource read. Same pattern for `StudentSecurity`/`StudentRepository`.
+- These bean methods must **return `false`/`null`, never throw**, when the id isn't found — throwing inside a
+  `@PreAuthorize` SpEL bean-method call gets wrapped by SpEL's method-invocation machinery into a
+  `SpelEvaluationException`, which `GlobalExceptionHandler`'s `ResourceNotFoundException` handler won't recognize,
+  so it falls through to the generic 500 catch-all instead of a clean 404. Net effect (accepted, consistent behavior
+  across the app): calling a write/read-by-id endpoint with a nonexistent id returns **403**, not 404 — the
+  `@PreAuthorize` check runs and fails before the method body's own `existsById`/`orElseThrow` check is ever reached.
+- Composition in `@PreAuthorize` strings nests bean calls as SpEL arguments, e.g.
+  `@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId))`. `||` combines
+  "principal of the owning school" with "the resource's own owner" for read access (e.g.
+  `getTeacherById`/`getStudentsOfTeacher`: `isPrincipalOf(...) || isSelf(...)`). `&&` combines two *different*
+  resources' ownership for link/unlink operations (e.g. `linkTeacherToStudent`/`TeacherServiceImpl.linkStudent`: the
+  caller must own *both* the teacher's school and the student's school) — since a principal only ever owns one
+  `School` (`SchoolRepository.findByUser` returns a singular `Optional`), this `&&` also implicitly forces
+  teacher+student to be at the same school.
+- Resulting access model: **PRINCIPAL** gets full read/write on everything belonging to their own school (school
+  info, its teachers, its students, their links) via `isPrincipalOf`. **TEACHER**/**STUDENT** get read-only access
+  to their own profile and their own linked students/teachers via `isSelf` — they have **zero** write endpoints
+  (`updateTeacher`/`deleteTeacher`/`linkStudent`/etc. only check `isPrincipalOf`, no `isSelf` branch, so a teacher
+  editing their own row correctly still gets 403). **ADMIN** bypasses every check via `SchoolSecurity.isPrincipalOf`'s
+  role check, plus the URL-level collection-endpoint rule above.
+- Why `SchoolService.registerSchool` is the one CRUD method that is **not** `@PreAuthorize`-protected: it's called
+  from `UserServiceImpl.registerPrincipal`, which sits behind `permitAll()` — there is no logged-in caller yet (the
+  `User` being registered is brand new and has never authenticated, so `authentication` for that request is
+  anonymous, not "the new principal"). Assigning `Role.PRINCIPAL` to the in-memory `User` object is just setting a
+  field on freshly-constructed data; it does not make `authentication` refer to that user. `registerSchool` instead
+  does a plain `if (user.getRole() != PRINCIPAL && user.getRole() != ADMIN) throw new AccessDeniedException(...)`
+  check directly on the passed-in `User` parameter. Note this specific check *could* technically be written as
+  `@PreAuthorize("#user.role.name() == 'PRINCIPAL' or ...")` — SpEL can read any method parameter, not only
+  `authentication` — but it's input validation on the method's own argument, not "who is allowed to call me," so it
+  stays a plain `if` rather than repurposing a caller-identity annotation for it.
+- `DataConfig`'s `CommandLineRunner` runs with **no** `Authentication` in the `SecurityContextHolder` at all (it's
+  not an HTTP request), so calling *any* `@PreAuthorize`-protected service method from the seeder — this now
+  includes `TeacherService.linkStudent`, not just `UserService.register{Teacher,Student}` — needs the
+  `actAsPrincipal(String principalEmail)` helper called first (injects a fake `UsernamePasswordAuthenticationToken`
+  with `ROLE_PRINCIPAL`) and `SecurityContextHolder.clearContext()` after. Forgetting this around a newly-protected
+  seed call fails app startup with an `AuthenticationCredentialsNotFoundException` wrapped inside a
+  `SpelEvaluationException` — check this first if `DataConfig` ever fails on a fresh boot right after adding a new
+  `@PreAuthorize`.
 
 ### Cross-domain relationships
 
