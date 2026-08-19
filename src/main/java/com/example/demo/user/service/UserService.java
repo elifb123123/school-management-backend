@@ -1,9 +1,11 @@
 package com.example.demo.user.service;
 
+import com.example.demo.user.dto.MeResponse;
 import com.example.demo.user.dto.PrincipalRegistrationRequest;
 import com.example.demo.user.dto.StudentRegistrationRequest;
 import com.example.demo.user.dto.TeacherRegistrationRequest;
 import com.example.demo.user.dto.UserResponse;
+import org.springframework.security.core.Authentication;
 
 public interface UserService {
 
@@ -12,4 +14,6 @@ public interface UserService {
     UserResponse registerTeacher(TeacherRegistrationRequest teacherRegistrationRequest);
 
     UserResponse registerStudent(StudentRegistrationRequest studentRegistrationRequest);
+
+    MeResponse getCurrentUser(Authentication authentication);
 }

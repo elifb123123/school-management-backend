@@ -24,4 +24,6 @@ public interface SchoolService {
 
     Page<TeacherResponse> getTeachersBySchoolId(Long schoolId, Pageable pageable);
 
+    Long getSchoolIdByUser(User user);
+
 }

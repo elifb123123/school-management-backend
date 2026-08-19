@@ -43,4 +43,6 @@ public interface TeacherService {
 
     List<String> getAllBranches();
 
+    Long getTeacherIdByUser(User user);
+
 }

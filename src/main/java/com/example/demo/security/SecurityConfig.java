@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
@@ -20,10 +21,11 @@ public class SecurityConfig {
 
     @Bean
 
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtAuthenticationFilter jwtAuthenticationFilter, CorsConfigurationSource corsConfigurationSource) throws Exception {
 
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable) //post, put, delete, patch isteklerine izin vermek için bunu engellemek zorundayız.
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // CorsConfig'teki bean'i Security'nin de tanıması için — yoksa preflight (OPTIONS) istekleri authenticated() kuralına takılıp CORS header'ı hiç eklenmeden reddediliyordu.
                 .authorizeHttpRequests(request ->
                         request.requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/school", "/api/teacher", "/api/student").hasRole("ADMIN")

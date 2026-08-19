@@ -1,10 +1,13 @@
 package com.example.demo.user.controller;
 
+import com.example.demo.user.dto.MeResponse;
 import com.example.demo.user.dto.PrincipalRegistrationRequest;
 import com.example.demo.user.dto.StudentRegistrationRequest;
 import com.example.demo.user.dto.TeacherRegistrationRequest;
 import com.example.demo.user.dto.UserResponse;
 import com.example.demo.user.service.UserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,5 +38,10 @@ public class UserController {
     @PostMapping("/register/student")
     public UserResponse registerStudent(@RequestBody StudentRegistrationRequest studentRegistrationRequest) {
         return userService.registerStudent(studentRegistrationRequest);
+    }
+
+    @GetMapping("/me")
+    public MeResponse getCurrentUser(Authentication authentication) {
+        return userService.getCurrentUser(authentication);
     }
 }

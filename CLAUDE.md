@@ -37,18 +37,29 @@ required. H2 and `spring-boot-h2console` are on the classpath (runtime scope) bu
 `DataConfig` (`src/main/java/com/example/demo/config/DataConfig.java`) seeds two principals (each with their own
 school: `principal1@gmail.com` → School 1, `principal2@gmail.com` → School 2), two students (`ayse`, `alex`, both at
 School 1), and two teachers (`john.smith` at School 1, `maria.garcia` at School 2) via a `CommandLineRunner` if the
-tables are empty on startup — useful reference data when testing endpoints manually (e.g. via
-`generated-requests.http`). Since every `School`/`Teacher`/`Student` must own a `User` account (see below), the
-seeder creates all of them through `UserService.registerPrincipal`/`registerTeacher`/`registerStudent` rather than
+tables are empty on startup — useful reference data when testing endpoints manually (e.g. via the `.http` files under
+`http/`, organized one-file-per-concern: `01-registration.http`, `02-auth.http`, `03-school.http`, `04-teacher.http`,
+`05-student.http`). Since every `School`/`Teacher`/`Student` must own a `User` account (see below), the seeder
+creates all of them through `UserService.registerPrincipal`/`registerTeacher`/`registerStudent` rather than
 constructing entities directly. All seeded accounts use the password `"password"` and **log in with their email**,
-not a username (see Security below) — e.g. `principal1@gmail.com` / `password`.
+not a username — e.g. `principal1@gmail.com` / `password`. Login itself goes through `POST /api/auth/login` (see
+Authentication below), not a raw HTTP `Authorization` header — there is no more Basic Auth in this app, `httpBasic()`
+was removed entirely in favor of JWT.
 
 ## Architecture
 
 The app is organized **package-by-feature**, not package-by-layer: each domain (`school`, `teacher`, `student`,
-`user`) under `src/main/java/com/example/demo/` has its own `controller/`, `dto/`, `mapper/`, `persistence/` (entity +
-`Repository` + `specification/`), and `service/` (interface + `*ServiceImpl`). Cross-cutting concerns live in the
-top-level `exception/`, `config/`, and `security/` packages.
+`user`, `auth`) under `src/main/java/com/example/demo/` has its own `controller/`, `dto/`, `mapper/`, `persistence/`
+(entity + `Repository` + `specification/`), and `service/` (interface + `*ServiceImpl`). Cross-cutting concerns live
+in the top-level `exception/`, `config/`, and `security/` packages.
+
+`auth/` is a lighter-weight variant of this shape: it owns `POST /api/auth/{login,refresh,logout}` (JWT issuing/
+rotation/revocation, see Authentication below) and has `controller/`, `dto/`, `persistence/` (`RefreshToken` +
+`RefreshTokenRepository`), and `service/`, but deliberately **no `mapper/`** — its DTOs (`LoginRequest`,
+`RefreshRequest`, `TokenResponse`) are either passed straight through to framework calls (`AuthenticationManager`,
+repository lookups) or assembled from independently-generated strings, never copied field-by-field from an entity,
+so there's no MapStruct-shaped job to automate. It also has no `specification/` — nothing about a `RefreshToken` is
+ever listed/filtered by a client.
 
 Per-domain pattern to follow when adding a new domain or endpoint:
 
@@ -144,14 +155,18 @@ Security `UserDetails` with `.username(user.getEmail())` — this second part ma
 changed to key off something else, that builder call has to change too, not just the repository lookup. There's no
 fallback `spring.security.user.*` account. Authorities are built as `"ROLE_" + role.name()` (never `.toString()` —
 `name()` is `final` on `Enum`, `toString()` is overridable and would silently break the authority string if someone
-customized it later).
+customized it later). `UserDetailServiceImpl` is no longer called on every request (there is no more `httpBasic()`)
+— it's now only invoked once, during `POST /api/auth/login`, indirectly via `AuthenticationManager.authenticate(...)`
+(see Authentication below); normal requests authenticate via a JWT instead and never touch this class or the DB for
+identity lookup.
 
-**URL-level rules** (`SecurityConfig.filterChain`): `/api/register/principal` is `permitAll()` (bootstrapping —
-there would otherwise be no way to create the first account), `/api/register/teacher` and `/api/register/student`
-require `hasRole("PRINCIPAL")`, `GET /api/school`/`/api/teacher`/`/api/student` (the bare collection endpoints —
-exact-path match, does **not** cover `/api/school/{id}` or any sub-resource) require `hasRole("ADMIN")` — reserved
-for a future admin role/UI that doesn't exist yet (`Role.ADMIN` is in the enum but not currently assignable to any
-real account), everything else requires `authenticated()`.
+**URL-level rules** (`SecurityConfig.filterChain`): `/api/auth/**` (`login`/`refresh`/`logout`) is `permitAll()`
+(none of the three can require a valid access token — see Authentication below for why), `/api/register/principal`
+is `permitAll()` (bootstrapping — there would otherwise be no way to create the first account), `/api/register/teacher`
+and `/api/register/student` require `hasRole("PRINCIPAL")`, `GET /api/school`/`/api/teacher`/`/api/student` (the bare
+collection endpoints — exact-path match, does **not** cover `/api/school/{id}` or any sub-resource) require
+`hasRole("ADMIN")` — reserved for a future admin role/UI that doesn't exist yet (`Role.ADMIN` is in the enum but not
+currently assignable to any real account), everything else requires `authenticated()`.
 
 **`@PreAuthorize` + per-domain `*Security` bean pattern.** `SecurityConfig` carries `@EnableMethodSecurity` — without
 it every `@PreAuthorize` annotation below would be silently ignored, and every non-register endpoint would just fall
@@ -208,6 +223,87 @@ back to the coarser `authenticated()` URL rule above. This is how every School/T
   `SpelEvaluationException` — check this first if `DataConfig` ever fails on a fresh boot right after adding a new
   `@PreAuthorize`.
 
+### Authentication (JWT: `auth/`, plus `JwtService`/`JwtAuthenticationFilter` in `security/`)
+
+`httpBasic()` has been removed entirely. Normal requests no longer carry credentials or hit the DB to prove identity
+— they carry a short-lived, self-verifying **access token** instead, and the DB is only consulted at the few moments
+where that statelessness needs to be broken on purpose (login, refresh, logout). This mirrors the same
+`security/` (generic mechanics) vs. per-domain (`auth/`, business data/orchestration) split used for authorization
+above: `JwtService` and `JwtAuthenticationFilter` live in the top-level `security/` package because they contain
+nothing domain-specific (signing/parsing a token, populating `SecurityContextHolder` from it) — everything about
+*what* gets stored and *when* tokens get issued/rotated/revoked lives in `auth/` instead.
+
+- **`JwtService`** (`security/JwtService.java`) wraps the `io.jsonwebtoken` (jjwt) library — it does not implement
+  JWT signing itself, just calls `Jwts.builder()`/`Jwts.parser()` with this app's own choices (HS256, which claims,
+  how long). `generateAccessToken(User user)` puts `user.getEmail()` in `sub`, `user.getRole().name()` in a custom
+  `role` claim (`.name()`, not `.toString()` — same reasoning as the `"ROLE_" + role.name()` rule above), `iat`, and
+  a 15-minute `exp`, signs with a key derived from the `jwt.secret` property (`Decoders.BASE64.decode(...)` then
+  `Keys.hmacShaKeyFor(...)`), and returns the compact string. `extractEmail`/`extractRole` mirror this in reverse via
+  a shared private `extractClaims(String token)` (`Jwts.parser().verifyWith(key).build().parseSignedClaims(token)`,
+  which decodes the payload **and** verifies the signature in one call, throwing `JwtException` — expired, malformed,
+  bad signature — if either check fails).
+- **Secret key**: `jwt.secret=${JWT_SECRET:<local-fallback>}` in `application.properties` (itself gitignored, so
+  even the literal fallback never reaches the repo) — reads from the `JWT_SECRET` env var if set, otherwise the
+  inline default, so a real deployment overrides it without touching code. HS256 (symmetric — one key both signs and
+  verifies) is deliberate here, not a simplification: this app is both the issuer and the only verifier of its own
+  tokens, so there's no need for RS256's asymmetric split (only needed when some services must verify tokens they
+  can't also forge). A large, multi-service org that centralizes identity in a dedicated IdP (Keycloak/Okta/Cognito)
+  wouldn't issue its own JWTs like this at all — this app is small enough that self-issuing is the proportionate
+  choice, not a shortcut.
+- **`JwtAuthenticationFilter`** (`security/JwtAuthenticationFilter.java`, `@Component`, extends
+  `OncePerRequestFilter`) is wired into the chain via
+  `.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)` in `SecurityConfig`
+  (`UsernamePasswordAuthenticationFilter` here is only used as a well-known anchor point in Spring's default filter
+  ordering — this app never actually uses that filter itself). Per request: reads the `Authorization` header, passes
+  through unauthenticated if it's missing or doesn't start with `"Bearer "` (so `permitAll()` endpoints, and requests
+  with no token at all, are unaffected); otherwise strips the prefix, calls `extractEmail`/`extractRole`, and — if
+  both succeed — builds a `UsernamePasswordAuthenticationToken(email, null, List.of(new
+  SimpleGrantedAuthority("ROLE_" + role)))` and writes it into `SecurityContextHolder`. This is deliberately built
+  from the token's own `role` claim rather than re-querying `UserDetailServiceImpl`/the DB — that DB round-trip on
+  every single request is exactly what JWT is meant to avoid; the `@PreAuthorize`/`*Security` ownership checks above
+  still independently hit the DB for their own purposes, but *authentication* itself no longer does. Currently
+  catches a broad `catch (Exception e)` around the extraction rather than the narrower `JwtException` — **known
+  TODO**, left broad for now rather than risking swallowing an unrelated bug silently.
+- **`auth/persistence/RefreshToken`** is the DB-backed half of the picture, and the reason the stateless design above
+  doesn't lose the ability to revoke a session: `token` (an opaque `UUID.randomUUID()` string — deliberately *not*
+  itself a JWT, since it's always looked up by DB row anyway, there's no benefit to it being self-describing),
+  `user` (`@ManyToOne`, not `@OneToOne` — one user can hold several concurrent refresh tokens, one per
+  device/session), `expiryDate` (`Instant`, currently 1 day — an absolute cap independent of activity, see next
+  point), `revoked` (`boolean`). Built via Lombok `@Builder` (alongside `@NoArgsConstructor`/`@AllArgsConstructor`)
+  rather than the plain `@AllArgsConstructor`/setter pattern used elsewhere — the auto-generated `id` makes a
+  positional all-args constructor call error-prone (you'd have to pass `null` for `id` by position), and `@Builder`
+  sidesteps that entirely since unset fields (like `id`) are simply omitted rather than passed as `null` in the
+  right position.
+- **Access token vs. refresh token, and why both exist**: the access token is what `JwtAuthenticationFilter` reads
+  on every request and is intentionally short-lived (15 min) and never persisted — if it leaks, the exposure window
+  is bounded to at most 15 minutes, and there is *no* way to revoke one early (stateless, by design). The refresh
+  token is long-lived (1 day) and *is* persisted specifically so it *can* be revoked early (logout, or — not yet
+  implemented, see below — detected theft); a client that has a refresh token can always mint a new access token
+  from it, so revocability lives entirely at the refresh-token layer. `AuthServiceImpl.login` mints a token of each
+  kind together; a login response's `TokenResponse(accessToken, refreshToken)` is the only place a refresh token's
+  value ever leaves the DB layer for the first time.
+- **Rotation**: every successful `POST /api/auth/refresh` issues a brand-new access+refresh pair and marks the
+  refresh token that was just used `revoked = true` (found via `RefreshTokenRepository.findByToken(...).filter(...)`,
+  which folds the "exists, not revoked, not expired" check into one `Optional` chain) — so a given refresh token
+  string is single-use. An invalid/revoked/expired refresh token throws `BadCredentialsException` (not
+  `ResourceNotFoundException`) specifically so `GlobalExceptionHandler`'s new `AuthenticationException` → 401 handler
+  catches it (see Errors below) — a stale credential is a 401 case, not a 404 one.
+- **`AuthServiceImpl.login` needs the `User` entity, not just what `AuthenticationManager` returns**: after
+  `authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password))` succeeds, the
+  `Authentication` it returns wraps Spring's own `UserDetails`, not this app's `User` — but `JwtService.
+  generateAccessToken(User)` needs `user.getEmail()`/`user.getRole()`. So `login` does its own
+  `userRepository.findByEmail(...)` right after authenticating, rather than trying to reuse the `Authentication`
+  result. `AuthenticationManager` itself is exposed as a `@Bean` in `SecurityConfig` via
+  `AuthenticationConfiguration.getAuthenticationManager()` (the modern replacement for the old
+  `AuthenticationManagerBuilder` approach) — it's what actually invokes `UserDetailServiceImpl` +
+  `PasswordEncoder` under the hood, the same two beans Basic Auth used to rely on, just called explicitly now
+  instead of automatically per-request.
+- **Known, deliberately deferred gaps** (not oversights — flagged and postponed during a learning session, revisit
+  before treating this as production-ready): revoked/expired `RefreshToken` rows are never deleted (on logout *or*
+  rotation) — they currently accumulate indefinitely; no scheduled cleanup job exists yet for rows that simply
+  expire without ever being used again; there is no reuse-detection (presenting an already-rotated-out refresh token
+  is rejected, but not treated as a signal to revoke the rest of that user's sessions as a suspected-theft response).
+
 ### Cross-domain relationships
 
 - `Student.school` / `Teacher.school` are `@ManyToOne` onto `School`; `SchoolRepository` exposes `findStudentsById`/
@@ -229,7 +325,9 @@ back to the coarser `authenticated()` URL rule above. This is how every School/T
 ### Errors
 
 `GlobalExceptionHandler` (`@RestControllerAdvice`) is the single place mapping exceptions to RFC 7807 `ProblemDetail`
-responses: `ResourceNotFoundException` → 404, `ResourceAlreadyExistsException` → 409, `AccessDeniedException` → 403,
+responses: `ResourceNotFoundException` → 404, `ResourceAlreadyExistsException` → 409, `AuthenticationException` → 401
+(added for JWT — catches the common Spring Security superclass, not just `BadCredentialsException`, so any future
+authentication-failure subtype gets the same handling for free), `AccessDeniedException` → 403,
 bean-validation/type-mismatch/unreadable-body → 400, catch-all → 500. Throw the domain exceptions from `exception/`
 (constructed as `new ResourceNotFoundException("Entity", "field", value)`) from service methods rather than handling
 not-found/conflict/forbidden cases ad hoc in controllers.

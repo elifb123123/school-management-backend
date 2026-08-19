@@ -17,7 +17,7 @@ public interface StudentMapper {
 
     @Mapping(target = "name", source = "user.name")
     @Mapping(target = "email", source = "user.email")
-    @Mapping(target = "schoolName", source = "school.schoolName")
+    @Mapping(target = "schoolId", source = "school.id")
     StudentResponse toResponse(Student student);
 
     List<StudentResponse> toResponseList(List<Student> students);

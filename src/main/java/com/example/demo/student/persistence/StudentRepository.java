@@ -1,6 +1,7 @@
 package com.example.demo.student.persistence;
 
 import com.example.demo.teacher.persistence.Teacher;
+import com.example.demo.user.persistence.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +23,9 @@ public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpec
 
     @Query("SELECT s.user.email FROM Student s WHERE s.id = :id")
     Optional<String> findEmailById(@Param("id") Long id);
+
+    Optional<Student> findByUser(User user);
+
+    @Query("SELECT s.school.id FROM Student s WHERE s.user.email = :email")
+    Optional<Long> findSchoolIdByUserEmail(@Param("email") String email);
 }

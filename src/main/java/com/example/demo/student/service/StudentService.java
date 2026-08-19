@@ -28,4 +28,6 @@ public interface StudentService {
 
     List<TeacherResponse> getTeachersOfStudent(Long studentId);
 
+    Long getStudentIdByUser(User user);
+
 }

@@ -1,6 +1,7 @@
 package com.example.demo.user.service;
 
 import com.example.demo.exception.ResourceAlreadyExistsException;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.school.service.SchoolService;
 import com.example.demo.student.service.StudentService;
 import com.example.demo.teacher.service.TeacherService;
@@ -10,6 +11,7 @@ import com.example.demo.user.persistence.Role;
 import com.example.demo.user.persistence.User;
 import com.example.demo.user.persistence.UserRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,5 +87,20 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(savedUser);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public MeResponse getCurrentUser(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", authentication.getName()));
+
+        Long entityId = switch (user.getRole()) {
+            case PRINCIPAL -> schoolService.getSchoolIdByUser(user);
+            case TEACHER -> teacherService.getTeacherIdByUser(user);
+            case STUDENT -> studentService.getStudentIdByUser(user);
+            case ADMIN -> null;
+        };
+
+        return new MeResponse(user.getRole().name(), entityId, user.getName());
+    }
 
 }

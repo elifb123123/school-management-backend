@@ -151,4 +151,11 @@ public class StudentServiceImpl implements StudentService {
         return teacherMapper.toResponseList(studentRepository.findTeachersByStudentId(studentId));
     }
 
+    @Transactional(readOnly = true)
+    public Long getStudentIdByUser(User user) {
+        Student student = studentRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Student", "user", user.getId()));
+        return student.getId();
+    }
+
 }

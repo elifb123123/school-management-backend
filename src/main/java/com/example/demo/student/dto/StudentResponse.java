@@ -8,6 +8,6 @@ public record StudentResponse(
         String email,
         LocalDate dateOfBirth,
         Integer age,
-        String schoolName
+        Long schoolId
 ) {
 }

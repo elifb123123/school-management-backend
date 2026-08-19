@@ -161,4 +161,12 @@ public class TeacherServiceImpl implements TeacherService {
                 .map(Enum::name)
                 .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long getTeacherIdByUser(User user) {
+        Teacher teacher = teacherRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher", "user", user.getId()));
+        return teacher.getId();
+    }
 }
