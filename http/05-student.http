@@ -1,0 +1,207 @@
+### 05 — STUDENT: self-access, sahiplik kontrolu, link/unlink sinir testleri
+### Bagimsiz calisabilir, seed data yeterli (register gerektirmez).
+### Not: gercek link/unlink mutasyonu YAPILMIYOR (seed iliskilerini bozmamak icin).
+
+@contentType = application/json
+
+### ==========================================================================
+### 1. Login: principal1, principal2, ayse (student, School 1)
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal1@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal1AccessToken", response.body.accessToken);
+%}
+
+###
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal2@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal2AccessToken", response.body.accessToken);
+%}
+
+###
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "ayse@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("ayseAccessToken", response.body.accessToken);
+%}
+
+
+### ==========================================================================
+### 2. Okulun sahibi ogrenciyi goruntuleyebilir -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/student/1
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor (sahip erisimi)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 3. Ogrenci kendi profilini goruntuleyebilir (self-access) -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/student/1
+Authorization: Bearer {{ayseAccessToken}}
+
+> {%
+client.test("200 bekleniyor (self-access)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 4. Baska okulun principal'i erisemez -> 403
+### ==========================================================================
+
+GET http://localhost:8080/api/student/1
+Authorization: Bearer {{principal2AccessToken}}
+
+> {%
+client.test("403 bekleniyor", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 5. Okulun sahibi ogrenciyi guncelleyebilir -> 200
+### ==========================================================================
+
+PUT http://localhost:8080/api/student/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal1AccessToken}}
+
+{
+  "dateOfBirth": "2003-03-05",
+  "schoolId": 1
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 6. Ogrenci kendi profilini guncelleyemez (yazma yetkisi yok) -> 403
+### ==========================================================================
+
+PUT http://localhost:8080/api/student/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{ayseAccessToken}}
+
+{
+  "dateOfBirth": "2003-03-05",
+  "schoolId": 1
+}
+
+> {%
+client.test("403 bekleniyor (ogrencinin yazma yetkisi yok)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 7. Sahibi ve ogrencinin kendisi ogretmen listesini gorebilir -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/student/1/teachers
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+###
+
+GET http://localhost:8080/api/student/1/teachers
+Authorization: Bearer {{ayseAccessToken}}
+
+> {%
+client.test("200 bekleniyor (self-access)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 8. Cross-school link denemesi: principal2, kendi okulunda olmayan
+###    ogrenciye (ayse, id=1, School 1) ogretmen baglamaya calisiyor -> 403
+### ==========================================================================
+
+POST http://localhost:8080/api/student/1/teachers/2/link
+Authorization: Bearer {{principal2AccessToken}}
+
+> {%
+client.test("403 bekleniyor (ayse principal2'nin okulunda degil)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 9. Token'siz erisim -> 401/403
+### ==========================================================================
+
+GET http://localhost:8080/api/student/1
+
+> {%
+client.test("401/403 bekleniyor", function() {
+    client.assert(response.status === 401 || response.status === 403, "Beklenen 401/403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 10. GET /api/student (liste) sadece ADMIN icin -> normal principal 403
+### ==========================================================================
+
+GET http://localhost:8080/api/student
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("403 bekleniyor (ADMIN rolu yok)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}

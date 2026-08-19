@@ -1,0 +1,175 @@
+### 03 — SCHOOL: sahiplik kontrolu, liste endpoint'i
+### Bagimsiz calisabilir, seed data yeterli (register gerektirmez).
+### Not: delete testi bilerek atlandi (seed veriyi bozmamak icin, dosya restart olmadan tekrar calistirilabilsin diye).
+
+@contentType = application/json
+
+### ==========================================================================
+### 1. Login: principal1 ve principal2
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal1@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal1AccessToken", response.body.accessToken);
+%}
+
+###
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal2@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal2AccessToken", response.body.accessToken);
+%}
+
+
+### ==========================================================================
+### 2. Sahibi kendi okulunu goruntuleyebilir -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/school/1
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor (sahip erisimi)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 3. Baska okulun principal'i erisemez -> 403
+### ==========================================================================
+
+GET http://localhost:8080/api/school/1
+Authorization: Bearer {{principal2AccessToken}}
+
+> {%
+client.test("403 bekleniyor (baska okulun principal'i)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 4. principal2 kendi okulunu (School 2) goruntuleyebilir -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/school/2
+Authorization: Bearer {{principal2AccessToken}}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 5. Sahibi kendi okulunu guncelleyebilir -> 200
+### ==========================================================================
+
+PUT http://localhost:8080/api/school/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal1AccessToken}}
+
+{
+  "schoolName": "School 1",
+  "address": "123 Main St, Springfield"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 6. Baska okulun principal'i guncelleyemez -> 403
+### ==========================================================================
+
+PUT http://localhost:8080/api/school/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal2AccessToken}}
+
+{
+  "schoolName": "Hacklendi",
+  "address": "Bilinmiyor"
+}
+
+> {%
+client.test("403 bekleniyor", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 7. Sahibi okulun ogrenci/ogretmen listesini gorebilir -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/school/1/students
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor (ogrenci listesi)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+###
+
+GET http://localhost:8080/api/school/1/teachers
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor (ogretmen listesi)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 8. GET /api/school (liste) sadece ADMIN icin -> normal principal 403
+### ==========================================================================
+
+GET http://localhost:8080/api/school
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("403 bekleniyor (ADMIN rolu yok)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 9. Token'siz erisim -> 401/403
+### ==========================================================================
+
+GET http://localhost:8080/api/school/1
+
+> {%
+client.test("401/403 bekleniyor", function() {
+    client.assert(response.status === 401 || response.status === 403, "Beklenen 401/403, gelen: " + response.status);
+});
+%}
