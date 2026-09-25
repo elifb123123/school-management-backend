@@ -1,6 +1,7 @@
-package com.example.demo.user.dto;
+package com.example.demo.user.dto.registration;
 
 import com.example.demo.teacher.dto.TeacherRequest;
+import com.example.demo.user.dto.UserRequest;
 import jakarta.validation.constraints.NotNull;
 
 public record TeacherRegistrationRequest(

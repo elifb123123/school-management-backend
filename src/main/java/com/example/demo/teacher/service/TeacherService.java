@@ -3,6 +3,7 @@ package com.example.demo.teacher.service;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.user.dto.updateRequest.TeacherUpdateRequest;
 import com.example.demo.user.persistence.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ public interface TeacherService {
     TeacherResponse registerTeacher(TeacherRequest teacherRequest, User user);
 
     // Var olan öğretmeni güncelle
-    TeacherResponse updateTeacher(TeacherRequest teacherRequest, Long TeacherId);
+    TeacherResponse updateTeacher(TeacherUpdateRequest teacherUpdateRequest, Long TeacherId);
 
     // ID'ye göre öğretmen sil
     void deleteTeacher(Long id);
