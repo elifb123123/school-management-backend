@@ -14,7 +14,9 @@ import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import com.example.demo.teacher.persistence.specification.TeacherSpecification;
+import com.example.demo.user.dto.updateRequest.TeacherUpdateRequest;
 import com.example.demo.user.persistence.User;
+import com.example.demo.user.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,6 +40,7 @@ public class TeacherServiceImpl implements TeacherService {
     private final SchoolRepository schoolRepository;
     private final TeacherMapper teacherMapper;
     private final StudentMapper studentMapper;
+    private final UserRepository userRepository;
 
     // todo: LOGGING....
 
@@ -79,12 +82,23 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId))")
-    public TeacherResponse updateTeacher(TeacherRequest teacherRequest, Long teacherId) {
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @teacherSecurity.findSchoolId(#teacherId))" +
+            "||@teacherSecurity.isSelf(authentication.name, #teacherId)")
+    public TeacherResponse updateTeacher(TeacherUpdateRequest teacherUpdateRequest, Long teacherId) {
         Teacher teacher = teacherRepository.findById(teacherId)
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher ", "id", teacherId));
 
-        teacherMapper.updateTeacherFromRequest(teacherRequest, teacher);
+        User user = teacher.getUser();
+        String newEmail = teacherUpdateRequest.userRequest().email();
+
+        if (!user.getEmail().equals(newEmail) && userRepository.existsByEmailAndIdNot(newEmail, user.getId())) {
+            throw new ResourceAlreadyExistsException("User", "email", newEmail);
+        }
+
+        user.setName(teacherUpdateRequest.userRequest().name());
+        user.setEmail(newEmail);
+
+        teacherMapper.updateTeacherFromRequest(teacherUpdateRequest.teacherRequest(), teacher);
         //okul değiştirilemez.
 
         // gereksiz tekrar. hibernate zaten güncelliyor.
@@ -160,5 +174,13 @@ public class TeacherServiceImpl implements TeacherService {
         return Arrays.stream(Branch.values())
                 .map(Enum::name)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long getTeacherIdByUser(User user) {
+        Teacher teacher = teacherRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher", "user", user.getId()));
+        return teacher.getId();
     }
 }

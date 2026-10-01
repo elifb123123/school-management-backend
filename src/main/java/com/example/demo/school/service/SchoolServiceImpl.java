@@ -54,7 +54,9 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
 
-    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #schoolId)")
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, #schoolId)" +
+            "|| @studentSecurity.isAtSchool(authentication.name, #schoolId)" +
+            "|| @teacherSecurity.isAtSchool(authentication.name, #schoolId)")
     public SchoolResponse getSchoolById(Long schoolId) {
         School school = schoolRepository.findById(schoolId).orElseThrow(() -> new ResourceNotFoundException("School ", "id", schoolId));
         log.info("Retrieved school response: {}", school);
@@ -125,5 +127,11 @@ public class SchoolServiceImpl implements SchoolService {
         return teachers.map(teacherMapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public Long getSchoolIdByUser(User user) {
+        School school = schoolRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("School", "user", user.getId()));
+        return school.getId();
+    }
 
 }

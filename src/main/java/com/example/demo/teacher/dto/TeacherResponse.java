@@ -7,6 +7,6 @@ public record TeacherResponse(
         String name,
         String email,
         Branch branch,
-        String schoolName
+        Long schoolId
 ) {
 }

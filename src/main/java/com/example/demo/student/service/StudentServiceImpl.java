@@ -13,7 +13,9 @@ import com.example.demo.student.persistence.specification.StudentSpecification;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.mapper.TeacherMapper;
 import com.example.demo.teacher.service.TeacherService;
+import com.example.demo.user.dto.updateRequest.StudentUpdateRequest;
 import com.example.demo.user.persistence.User;
+import com.example.demo.user.persistence.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -36,18 +38,21 @@ public class StudentServiceImpl implements StudentService {
     private final StudentMapper studentMapper;
     private final TeacherService teacherService;//owning side teacher bu yuzden student_teacher ilişkilerina ait fonksiyonlar oradan geliyor.
     private final TeacherMapper teacherMapper;
+    private final UserRepository userRepository;
 
     @Autowired
     public StudentServiceImpl(StudentRepository studentRepository,
                               SchoolRepository schoolRepository,
                               StudentMapper studentMapper,
                               TeacherService teacherService,
-                              TeacherMapper teacherMapper) {
+                              TeacherMapper teacherMapper,
+                              UserRepository userRepository ) {
         this.studentRepository = studentRepository;
         this.schoolRepository = schoolRepository;
         this.studentMapper = studentMapper;
         this.teacherService = teacherService;
         this.teacherMapper = teacherMapper;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -80,11 +85,20 @@ public class StudentServiceImpl implements StudentService {
         log.info("Deleted student successfully");
     }
 
-    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @studentSecurity.findSchoolId(#studentId))")
-    public StudentResponse updateStudent(Long studentId, StudentRequest studentRequest) {
+    @PreAuthorize("@schoolSecurity.isPrincipalOf(authentication.name, @studentSecurity.findSchoolId(#studentId))" +
+            "|| @studentSecurity.isSelf(authentication.name, #studentId)")
+    public StudentResponse updateStudent(Long studentId, StudentUpdateRequest studentUpdateRequest) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "id", studentId));
-        studentMapper.updateStudentFromRequest(studentRequest, student);
+        User user = student.getUser();
+        String newEmail = studentUpdateRequest.userRequest().email();
+
+        if (!user.getEmail().equals(newEmail) && userRepository.existsByEmailAndIdNot(newEmail, user.getId())) { // kullanıcı mailini değiştimi ve  bu e-mail'e sahip başka biri var mı diye kontrol eder.
+            throw new ResourceAlreadyExistsException("User", "email", newEmail);
+        }
+        user.setName(studentUpdateRequest.userRequest().name());
+        user.setEmail(newEmail);
+        studentMapper.updateStudentFromRequest(studentUpdateRequest.studentRequest(), student);
         // school kasıtlı olarak dokunulmuyor
         log.info("Updated student successfully");
         // student, findById ile çekildiği için hâlâ Hibernate'in izlediği (managed) bir nesne;
@@ -149,6 +163,13 @@ public class StudentServiceImpl implements StudentService {
         }
         log.info("Teachers of student{} retrieved.", studentId);
         return teacherMapper.toResponseList(studentRepository.findTeachersByStudentId(studentId));
+    }
+
+    @Transactional(readOnly = true)
+    public Long getStudentIdByUser(User user) {
+        Student student = studentRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Student", "user", user.getId()));
+        return student.getId();
     }
 
 }

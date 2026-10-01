@@ -1,0 +1,228 @@
+### 01 — REGISTRATION FLOWS
+### Bagimsiz calisabilir. FRESH BOOT gerektirir (bu dosya School 3 + principal3'u kendi olusturuyor;
+### restart etmeden tekrar calistirirsan 1. adim 409 doner).
+### Seed data (DataConfig): principal1@gmail.com -> School 1, principal2@gmail.com -> School 2.
+
+@contentType = application/json
+
+### ==========================================================================
+### 1. Principal kaydi (permitAll) -> 200, yeni bir School ile birlikte olusturur
+### ==========================================================================
+
+POST http://localhost:8080/api/register/principal
+Content-Type: {{contentType}}
+
+{
+  "userRequest": {
+    "name": "principal3",
+    "email": "principal3@gmail.com",
+    "password": "password"
+  },
+  "schoolRequest": {
+    "schoolName": "School 3",
+    "address": "789 Test Ave"
+  }
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 2. Ayni email ile tekrar kayit -> 409 (ResourceAlreadyExistsException)
+### ==========================================================================
+
+POST http://localhost:8080/api/register/principal
+Content-Type: {{contentType}}
+
+{
+  "userRequest": {
+    "name": "principal3-duplicate",
+    "email": "principal3@gmail.com",
+    "password": "password"
+  },
+  "schoolRequest": {
+    "schoolName": "School 3 Duplicate",
+    "address": "789 Test Ave"
+  }
+}
+
+> {%
+client.test("409 bekleniyor (email zaten var)", function() {
+    client.assert(response.status === 409, "Beklenen 409, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 3. Login: principal1 ve principal3 (sonraki adimlar icin)
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal1@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal1AccessToken", response.body.accessToken);
+%}
+
+###
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal3@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal3AccessToken", response.body.accessToken);
+%}
+
+
+### ==========================================================================
+### 4. Teacher kaydi: principal3 kendi okuluna (School 3) ogretmen ekliyor -> 200
+### ==========================================================================
+
+POST http://localhost:8080/api/register/teacher
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal3AccessToken}}
+
+{
+  "userRequest": {
+    "name": "test.teacher",
+    "email": "test.teacher@gmail.com",
+    "password": "password"
+  },
+  "teacherRequest": {
+    "branch": "PHYSICS",
+    "schoolId": 3
+  }
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 5. Teacher kaydi: principal1, principal3'un okuluna ogretmen eklemeye calisiyor -> 403
+### ==========================================================================
+
+POST http://localhost:8080/api/register/teacher
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal1AccessToken}}
+
+{
+  "userRequest": {
+    "name": "sahte.ogretmen",
+    "email": "sahte.ogretmen@gmail.com",
+    "password": "password"
+  },
+  "teacherRequest": {
+    "branch": "PHYSICS",
+    "schoolId": 3
+  }
+}
+
+> {%
+client.test("403 bekleniyor (baska okula ogretmen eklenemez)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 6. Teacher kaydi: token'siz istek -> 401/403
+### ==========================================================================
+
+POST http://localhost:8080/api/register/teacher
+Content-Type: {{contentType}}
+
+{
+  "userRequest": {
+    "name": "tokensiz.ogretmen",
+    "email": "tokensiz.ogretmen@gmail.com",
+    "password": "password"
+  },
+  "teacherRequest": {
+    "branch": "PHYSICS",
+    "schoolId": 3
+  }
+}
+
+> {%
+client.test("401/403 bekleniyor (token yok)", function() {
+    client.assert(response.status === 401 || response.status === 403, "Beklenen 401/403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 7. Student kaydi: principal3 kendi okuluna (School 3) ogrenci ekliyor -> 200
+### ==========================================================================
+
+POST http://localhost:8080/api/register/student
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal3AccessToken}}
+
+{
+  "userRequest": {
+    "name": "test.student",
+    "email": "test.student@gmail.com",
+    "password": "password"
+  },
+  "studentRequest": {
+    "dateOfBirth": "2005-01-01",
+    "schoolId": 3
+  }
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 8. Student kaydi: principal1, principal3'un okuluna ogrenci eklemeye calisiyor -> 403
+### ==========================================================================
+
+POST http://localhost:8080/api/register/student
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal1AccessToken}}
+
+{
+  "userRequest": {
+    "name": "sahte.ogrenci",
+    "email": "sahte.ogrenci@gmail.com",
+    "password": "password"
+  },
+  "studentRequest": {
+    "dateOfBirth": "2005-01-01",
+    "schoolId": 3
+  }
+}
+
+> {%
+client.test("403 bekleniyor (baska okula ogrenci eklenemez)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}

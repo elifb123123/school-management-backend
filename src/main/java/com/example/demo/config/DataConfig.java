@@ -11,9 +11,9 @@ import com.example.demo.teacher.persistence.Branch;
 import com.example.demo.teacher.persistence.Teacher;
 import com.example.demo.teacher.persistence.TeacherRepository;
 import com.example.demo.teacher.service.TeacherService;
-import com.example.demo.user.dto.PrincipalRegistrationRequest;
-import com.example.demo.user.dto.StudentRegistrationRequest;
-import com.example.demo.user.dto.TeacherRegistrationRequest;
+import com.example.demo.user.dto.registration.PrincipalRegistrationRequest;
+import com.example.demo.user.dto.registration.StudentRegistrationRequest;
+import com.example.demo.user.dto.registration.TeacherRegistrationRequest;
 import com.example.demo.user.dto.UserRequest;
 import com.example.demo.user.service.UserService;
 import org.springframework.boot.CommandLineRunner;
@@ -27,7 +27,16 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 
+/*
+* On startup, `DataConfig` seeds reference data when the corresponding tables are empty:
 
+- Two principals and their schools
+- Two students in School 1
+- Two teachers, one in each school
+- Links between the School 1 teacher and the two School 1 students
+
+The seeded accounts use the password `password` and authenticate with their email addresses.
+*/
 @Configuration
 public class DataConfig {
 

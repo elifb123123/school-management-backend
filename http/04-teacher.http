@@ -1,0 +1,220 @@
+### 04 — TEACHER: self-access, sahiplik kontrolu, link/unlink sinir testleri
+### Bagimsiz calisabilir, seed data yeterli (register gerektirmez).
+### Not: gercek link/unlink mutasyonu YAPILMIYOR (seed iliskilerini bozmamak icin) —
+### sadece @PreAuthorize'in mutasyondan ONCE reddettigi cross-school senaryolar test ediliyor.
+
+@contentType = application/json
+
+### ==========================================================================
+### 1. Login: principal1, principal2, jhon (teacher, School 1)
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal1@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal1AccessToken", response.body.accessToken);
+%}
+
+###
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal2@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal2AccessToken", response.body.accessToken);
+%}
+
+###
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "jhon@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("johnAccessToken", response.body.accessToken);
+%}
+
+
+### ==========================================================================
+### 2. Okulun sahibi ogretmeni goruntuleyebilir -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/teacher/1
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor (sahip erisimi)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 3. Ogretmen kendi profilini goruntuleyebilir (self-access) -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/teacher/1
+Authorization: Bearer {{johnAccessToken}}
+
+> {%
+client.test("200 bekleniyor (self-access)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 4. Baska okulun principal'i erisemez -> 403
+### ==========================================================================
+
+GET http://localhost:8080/api/teacher/1
+Authorization: Bearer {{principal2AccessToken}}
+
+> {%
+client.test("403 bekleniyor", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 5. Okulun sahibi ogretmeni guncelleyebilir -> 200
+### ==========================================================================
+
+PUT http://localhost:8080/api/teacher/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{principal1AccessToken}}
+
+{
+  "branch": "CHEMISTRY",
+  "schoolId": 1
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 6. Ogretmen kendi profilini guncelleyemez (yazma yetkisi yok) -> 403
+### ==========================================================================
+
+PUT http://localhost:8080/api/teacher/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{johnAccessToken}}
+
+{
+  "branch": "PHYSICS",
+  "schoolId": 1
+}
+
+> {%
+client.test("403 bekleniyor (ogretmenin yazma yetkisi yok)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 7. Sahibi ve ogretmenin kendisi ogrenci listesini gorebilir -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/teacher/1/students
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+###
+
+GET http://localhost:8080/api/teacher/1/students
+Authorization: Bearer {{johnAccessToken}}
+
+> {%
+client.test("200 bekleniyor (self-access)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 8. Cross-school link denemesi: principal1, kendi okulunda olmayan
+###    ogretmene (maria, id=2, School 2) ogrenci baglamaya calisiyor -> 403
+### ==========================================================================
+
+POST http://localhost:8080/api/teacher/2/students/1/link
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("403 bekleniyor (maria principal1'in okulunda degil)", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 9. Cross-school unlink denemesi: principal2, kendi okulunda olmayan
+###    (john-alex, School 1) iliskiyi koparmaya calisiyor -> 403
+### ==========================================================================
+
+DELETE http://localhost:8080/api/teacher/1/students/2/unlink
+Authorization: Bearer {{principal2AccessToken}}
+
+> {%
+client.test("403 bekleniyor", function() {
+    client.assert(response.status === 403, "Beklenen 403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 10. Branch listesi: authenticated her kullanici erisebilir -> 200, tokensiz -> 401/403
+### ==========================================================================
+
+GET http://localhost:8080/api/teacher/branches
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+###
+
+GET http://localhost:8080/api/teacher/branches
+
+> {%
+client.test("401/403 bekleniyor (token yok)", function() {
+    client.assert(response.status === 401 || response.status === 403, "Beklenen 401/403, gelen: " + response.status);
+});
+%}

@@ -1,6 +1,7 @@
 package com.example.demo.teacher.persistence;
 
 import com.example.demo.student.persistence.Student;
+import com.example.demo.user.persistence.User;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -37,4 +38,10 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long>, JpaSpec
 
     @Query("SELECT t.user.email FROM Teacher t WHERE t.id = :teacherId")
     Optional<String> findEmailById(@Param("teacherId") Long teacherId);
+
+    Optional<Teacher> findByUser(User user);
+
+    // TeacherRepository.java
+    @Query("SELECT t.school.id FROM Teacher t WHERE t.user.email = :email")
+    Optional<Long> findSchoolIdByUserEmail(@Param("email") String email);
 }

@@ -4,6 +4,7 @@ import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherRequest;
 import com.example.demo.teacher.dto.TeacherResponse;
 import com.example.demo.teacher.service.TeacherService;
+import com.example.demo.user.dto.updateRequest.TeacherUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -44,8 +45,8 @@ public class TeacherController {
 
     // PUT /api/teachers/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<TeacherResponse> updateTeacher(@PathVariable Long id, @RequestBody @Valid TeacherRequest teacherRequest) {
-        TeacherResponse updated = teacherService.updateTeacher(teacherRequest, id);
+    public ResponseEntity<TeacherResponse> updateTeacher(@PathVariable Long id, @RequestBody @Valid TeacherUpdateRequest teacherUpdateRequest) {
+        TeacherResponse updated = teacherService.updateTeacher(teacherUpdateRequest, id);
         return ResponseEntity.ok(updated);
     }
 

@@ -3,6 +3,7 @@ package com.example.demo.student.service;
 import com.example.demo.student.dto.StudentRequest;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.user.dto.updateRequest.StudentUpdateRequest;
 import com.example.demo.user.persistence.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +19,7 @@ public interface StudentService {
 
     void deleteStudent(Long studentId);
 
-    StudentResponse updateStudent(Long studentId, StudentRequest studentRequest);
+    StudentResponse updateStudent(Long studentId, StudentUpdateRequest studentUpdateRequest);
 
     StudentResponse searchStudent(Long studentId);
 
@@ -27,5 +28,7 @@ public interface StudentService {
     void unlinkTeacherFromStudent(Long studentId, Long teacherId);
 
     List<TeacherResponse> getTeachersOfStudent(Long studentId);
+
+    Long getStudentIdByUser(User user);
 
 }

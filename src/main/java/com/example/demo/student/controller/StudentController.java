@@ -4,6 +4,7 @@ import com.example.demo.student.dto.StudentRequest;
 import com.example.demo.student.dto.StudentResponse;
 import com.example.demo.student.service.StudentService;
 import com.example.demo.teacher.dto.TeacherResponse;
+import com.example.demo.user.dto.updateRequest.StudentUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -51,8 +52,8 @@ public class StudentController {
 
     // TODO: PathVariable ve RequestParam farkı ???
     @PutMapping(path = "/{studentId}")
-    public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long studentId, @RequestBody @Valid StudentRequest studentRequest) {
-        StudentResponse updated = studentService.updateStudent(studentId, studentRequest);
+    public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long studentId, @RequestBody @Valid StudentUpdateRequest studentUpdateRequest) {
+        StudentResponse updated = studentService.updateStudent(studentId, studentUpdateRequest);
         return ResponseEntity.ok().body(updated);
     }
 

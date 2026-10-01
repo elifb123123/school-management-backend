@@ -1,0 +1,156 @@
+### 02 — AUTH: login / access-token dogrulama / refresh rotation / logout
+### Bagimsiz calisabilir, seed data yeterli (register gerektirmez).
+
+@contentType = application/json
+
+### ==========================================================================
+### 1. Dogru bilgilerle login -> 200, accessToken/refreshToken'i yakala
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal1@gmail.com",
+  "password": "password"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("principal1AccessToken", response.body.accessToken);
+client.global.set("principal1RefreshToken", response.body.refreshToken);
+%}
+
+
+### ==========================================================================
+### 2. Yanlis sifreyle login -> 401 (AuthenticationException handler'ini test eder)
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "principal1@gmail.com",
+  "password": "wrongpassword"
+}
+
+> {%
+client.test("401 bekleniyor (yanlis sifre)", function() {
+    client.assert(response.status === 401, "Beklenen 401, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 3. accessToken (Bearer) ile korumali endpoint'e erisim -> 200
+### ==========================================================================
+
+GET http://localhost:8080/api/school/1
+Authorization: Bearer {{principal1AccessToken}}
+
+> {%
+client.test("200 bekleniyor (Bearer token ile erisim)", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 4. Token'siz ayni endpoint'e erisim -> 401/403
+### ==========================================================================
+
+GET http://localhost:8080/api/school/1
+
+> {%
+client.test("401/403 bekleniyor (token yok)", function() {
+    client.assert(response.status === 401 || response.status === 403, "Beklenen 401/403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 5. Eski Basic Auth artik calismiyor -> 401/403
+### ==========================================================================
+
+GET http://localhost:8080/api/school/1
+Authorization: Basic cHJpbmNpcGFsMUBnbWFpbC5jb206cGFzc3dvcmQ=
+
+> {%
+client.test("401/403 bekleniyor (Basic Auth artik desteklenmiyor)", function() {
+    client.assert(response.status === 401 || response.status === 403, "Beklenen 401/403, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 6. refreshToken ile yeni token cifti al -> 200 (rotation), eski refreshToken'i sakla
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{principal1RefreshToken}}"
+}
+
+> {%
+client.test("200 bekleniyor", function() {
+    client.assert(response.status === 200, "Beklenen 200, gelen: " + response.status);
+});
+client.global.set("oldPrincipal1RefreshToken", client.global.get("principal1RefreshToken"));
+client.global.set("principal1AccessToken", response.body.accessToken);
+client.global.set("principal1RefreshToken", response.body.refreshToken);
+%}
+
+
+### ==========================================================================
+### 7. Rotate edilmis (eski) refreshToken tekrar kullanilamaz -> 401
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{oldPrincipal1RefreshToken}}"
+}
+
+> {%
+client.test("401 bekleniyor (rotate edilmis token tekrar kullanilamaz)", function() {
+    client.assert(response.status === 401, "Beklenen 401, gelen: " + response.status);
+});
+%}
+
+
+### ==========================================================================
+### 8. logout, sonrasinda ayni refreshToken ile refresh denemesi -> 401
+### ==========================================================================
+
+POST http://localhost:8080/api/auth/logout
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{principal1RefreshToken}}"
+}
+
+> {%
+client.test("204 bekleniyor", function() {
+    client.assert(response.status === 204, "Beklenen 204, gelen: " + response.status);
+});
+%}
+
+###
+
+POST http://localhost:8080/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{principal1RefreshToken}}"
+}
+
+> {%
+client.test("401 bekleniyor (logout sonrasi refresh calismamali)", function() {
+    client.assert(response.status === 401, "Beklenen 401, gelen: " + response.status);
+});
+%}

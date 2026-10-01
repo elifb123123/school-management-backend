@@ -17,4 +17,10 @@ public class TeacherSecurity {
     public boolean isSelf(String requesterEmail, Long teacherId) {
         return teacherRepository.findEmailById(teacherId).map(email -> email.equals(requesterEmail)).orElse(false);
     }
+
+    public boolean isAtSchool(String requesterEmail, Long schoolId) {
+        return teacherRepository.findSchoolIdByUserEmail(requesterEmail)
+                .map(schoolId::equals)
+                .orElse(false);
+    }
 }

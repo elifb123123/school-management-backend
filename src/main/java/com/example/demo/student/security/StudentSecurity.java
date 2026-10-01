@@ -16,4 +16,10 @@ public class StudentSecurity {
     public boolean isSelf(String requestEmail, Long studentId) {
         return studentRepository.findEmailById(studentId).map(requestEmail::equals).orElse(false);
     }
+
+    public boolean isAtSchool(String requesterEmail, Long schoolId) {
+        return studentRepository.findSchoolIdByUserEmail(requesterEmail)
+                .map(schoolId::equals)
+                .orElse(false);
+    }
 }
