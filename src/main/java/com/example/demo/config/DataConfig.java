@@ -27,7 +27,16 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 
+/*
+* On startup, `DataConfig` seeds reference data when the corresponding tables are empty:
 
+- Two principals and their schools
+- Two students in School 1
+- Two teachers, one in each school
+- Links between the School 1 teacher and the two School 1 students
+
+The seeded accounts use the password `password` and authenticate with their email addresses.
+*/
 @Configuration
 public class DataConfig {
 
